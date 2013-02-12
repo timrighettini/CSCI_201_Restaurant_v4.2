@@ -66,7 +66,7 @@ public class WaiterAgent extends Agent {
     CashierAgent cashier;
 
     /*Part 2 Non-Normative*/
-    List<Integer> customerToChangeOrder; // Holds tablenum of customer of change order
+    List<Integer> customerToChangeOrder = new ArrayList<Integer>(); // Holds tablenum of customer of change order
 
     /*Part 3 (Non-)Normative*/
     private boolean breakButtonPressed = false;
