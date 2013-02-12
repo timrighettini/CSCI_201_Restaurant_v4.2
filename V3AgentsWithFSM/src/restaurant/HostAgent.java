@@ -245,7 +245,7 @@ public class HostAgent extends Agent {
 
     /*Part 4 Non-Normative*/
     private void doSendCustomerWaitingMessage(CustomerAgent c) {
-    	c.msgSorryTablesAreOccupied(waitList.size());
+//    	c.msgSorryTablesAreOccupied(waitList.size());
     	stateChanged();
     }
 

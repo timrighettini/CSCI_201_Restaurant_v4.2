@@ -223,7 +223,7 @@ public class CookAgent extends Agent {
     
     /*Part 2 Normative*/
     private void orderFromMarket(Map<String, Integer> items) { // Send order to market
-    	markets.get(nextMarket).msgNeedFoodDelivered(items);
+//    	markets.get(nextMarket).msgNeedFoodDelivered(items);
     	stateChanged();
     }
 
