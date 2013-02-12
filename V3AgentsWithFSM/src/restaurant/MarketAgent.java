@@ -44,7 +44,7 @@ public class MarketAgent extends Agent {
 	private List<Order> orders = new ArrayList<Order>(); // List of all the cook’s orders
 	private List<Payment> cashierPayments = new ArrayList<Payment>(); // Payments from the cashier.  bill.choice will the id of an order instead of the item choice itself
 
-	private double totalMoney; // Money that the market has, this value may not be implemented unless it is needed in v4.2
+	private volatile double totalMoney = 0.00; // Money that the market has, this value may not be implemented unless it is needed in v4.2
 	private int timeForDelivery; // Shipping time used to estimate arrival times
 
 	private Timer timer = new Timer(); // Used to simulate shipping times for orders
@@ -166,6 +166,9 @@ public class MarketAgent extends Agent {
 	//Other Methods:
 	public double doGetTotalCost(Map<String, Integer> items) {
 		double d = 0.00;
+		
+		// Create the methodology for determining d
+				
 		return d;
 	} // Will determine the cost of a bill based on what the cooks wants and current market inventory.   returns 0 if inventory cannot handle order.
 

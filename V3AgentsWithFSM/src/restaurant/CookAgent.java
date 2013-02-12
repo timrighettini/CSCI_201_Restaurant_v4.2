@@ -26,6 +26,11 @@ public class CookAgent extends Agent {
     //Timer for simulation
     Timer timer = new Timer();
     Restaurant restaurant; //Gui layout
+    
+    // Constants
+    int FOOD_AMOUNT = 5;
+    int THRESHOLD_INIT = 3;
+    int MAX_VAL = 10;
 
     /** Constructor for CookAgent class
      * @param name name of the cook
@@ -45,9 +50,13 @@ public class CookAgent extends Agent {
      *  Contains the food type, its cooking time, and ...
      */
     private class FoodData {
-	String type; //kind of food
-	double cookTime;
-	// other things ...
+		String type; //kind of food
+		double cookTime;
+		/*New to v4.1*/ /*Part 2 Normative*/
+		int amount = FOOD_AMOUNT;
+		int threshold = THRESHOLD_INIT;
+		int MAX = MAX_VAL;
+    
 	
 	public FoodData(String type, double cookTime){
 	    this.type = type;
@@ -83,10 +92,29 @@ public class CookAgent extends Agent {
 	}
     }
 
+    /*Part 2 Normative*/
+    private class ETA {
+    	int orderTime;
+    	int deliveryTime;
+    	Map<String, Integer> items;
+    	
+    	public ETA(int o, int d, Map i) {
+    		orderTime = o;
+    		deliveryTime = d;
+    		items = i;
+    	}
+    }
+
+    List<Map<String, Integer>> deliveries = new ArrayList<Map<String, Integer>>(); // Deliveries given from the market
+    List <MarketAgent> markets = new ArrayList<MarketAgent>(); // List of cook’s markets
+    int nextMarket = 0; // Used to selected which market to order from
+    List<ETA> arrivalTimes = new ArrayList<ETA>(); // Receipts for deliveries with tracking information
+
+    /*Part 2 Non-Normative*/
+    int REASONABLE_WAIT = 3000; // The cook will be willing to wait 3000 for an order to arrive, else he/she will tell the customer to change an order
 
     
-
-
+    
     // *** MESSAGES ***
 
     /** Message from a waiter giving the cook a new order.
@@ -98,11 +126,31 @@ public class CookAgent extends Agent {
 	orders.add(new Order(waiter, tableNum, choice));
 	stateChanged();
     }
+    
+    /*Part 2 Normative*/
+    public void msgHereIsFoodDelivery(Map<String, Integer> items) {
+    	deliveries.add(items);
+    	stateChanged();
+    }
 
+    public void msgSorryWeCannotFulfillOrder() {
+    	nextMarket++; // Reset to 0 if past markets.size()
+    	stateChanged();
+    }
+
+    public void msgHereIsYourTrackingInformation(int orderTime, int deliveryTime, Map<String, Integer> items) {
+    	arrivalTimes.add(new ETA(orderTime, deliveryTime, items));
+    	stateChanged();
+    }
 
     /** Scheduler.  Determine what action is called for, and do it. */
     protected boolean pickAndExecuteAnAction() {
 	
+//   /*Part 2 Normative*/
+//   if ($ d in deliveries) then
+//   	addFoodToInventory(d); return true;
+
+    	
 	//If there exists an order o whose status is done, place o.
 	for(Order o:orders){
 	    if(o.status == Status.done){
@@ -117,6 +165,13 @@ public class CookAgent extends Agent {
 		return true;
 	    }
 	}
+	
+//	/*Part 2 Normative*/
+//	if (V choice s.t. inventory.get(choice).amounts < threashold) then
+//		orderFromMarket(new Map<V choice, int num>);
+//		// Implementation detail = getting V choice and num
+//		return true;
+
 
 	//we have tried all our rules (in this case only one) and found
 	//nothing to do. So return false to main loop of abstract agent
@@ -131,8 +186,33 @@ public class CookAgent extends Agent {
      * @param order
      */
     private void cookOrder(Order order){
-	DoCooking(order);
-	order.status = Status.cooking;
+    	if (inventory.get(order.choice).amount == 0) {
+    		boolean removeOrder = false; // flag to remove the order
+    		for (ETA eta: arrivalTimes) {
+    			if (eta.items.get(order.choice) > 0) {
+    				if (eta.deliveryTime > REASONABLE_WAIT) { // If an item of this choice is is NOT coming soon
+    					removeOrder = true;
+    				}
+    				else { // The order is coming soon, break out of loop and continue with regular ordering stuff
+    					removeOrder = false;
+    					break;
+    				}
+    			}
+    		}
+    		if (removeOrder == true) { // If no delivery is coming soon for the proper ingredients
+//    			order.waiter.msgOutOfThisItem(order.choice, order.tableNum);
+    			orders.remove(order);  			
+    		}
+    	    else { // Continue as normal
+    	    	DoCooking(order);
+    	    	order.status = Status.cooking;
+    	    }
+    	}
+    	
+	    else {
+	    	DoCooking(order);
+	    	order.status = Status.cooking;
+	    }
     }
 
     private void placeOrder(Order order){
@@ -140,6 +220,23 @@ public class CookAgent extends Agent {
 	order.waiter.msgOrderIsReady(order.tableNum, order.food);
 	orders.remove(order);
     }
+    
+    /*Part 2 Normative*/
+    private void orderFromMarket(Map<String, Integer> items) { // Send order to market
+    	markets.get(nextMarket).msgNeedFoodDelivered(items);
+    	stateChanged();
+    }
+
+    private void addFoodToInventory(Map<String, Integer> items) { // Fetch a delivery & add contents to inventory
+    	// Iterate through inventory and add items to cook
+    	for (ETA aT: arrivalTimes) {
+    		if (aT.items == items) {
+    			arrivalTimes.remove(aT);
+    		}
+    	}
+    deliveries.remove(items);
+    }
+
 
 
     // *** EXTRA -- all the simulation routines***
@@ -182,6 +279,14 @@ public class CookAgent extends Agent {
 			cookOrder.status = Status.done;
 			stateChanged();
 		} // Since this class will be declared INSIDE CookAgent, the data from CookAgent is accessible from this class
+	}
+	
+	public void addMarket(MarketAgent m) { // Will add a market to the cook's set of markets
+		markets.add(m);
+	}
+	
+	public void removeMarket(MarketAgent m) { // Will remove a market from the markets array
+		markets.remove(m);
 	}
 
 }

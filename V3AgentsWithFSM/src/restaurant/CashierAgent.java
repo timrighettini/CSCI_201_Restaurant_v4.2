@@ -98,7 +98,7 @@ public class CashierAgent extends Agent {
 
 	// Actions:
 	/*Part 1 Normative*/
-	public void checkCustomerPayment(PayCustomer cp, Bill bill) { 
+	private void checkCustomerPayment(PayCustomer cp, Bill bill) { 
 	// Check to see if cp’s bill matches a bill in the billsToPay dataBase, and then parse information 
 		if (cp.payment == cp.cBill.totalCost) {
 			totalMoney += cp.payment; // Increment the money earned for the restaurant
@@ -120,7 +120,7 @@ public class CashierAgent extends Agent {
 	}
 
 	/*Part 2 Normative*/
-	public void payMarketBill(Bill bill) { // Pay the bill sent from a market by using the Agent reference in bill
+	private void payMarketBill(Bill bill) { // Pay the bill sent from a market by using the Agent reference in bill
 		totalMoney -= bill.totalCost;
 //		bill.agent.msgHereIsCashierPayment(bill.totalCost, bill.choice);
 		marketBills.remove(bill);

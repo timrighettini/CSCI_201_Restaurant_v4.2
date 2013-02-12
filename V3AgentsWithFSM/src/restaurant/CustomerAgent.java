@@ -20,18 +20,35 @@ public class CustomerAgent extends Agent {
     private HostAgent host;
     private WaiterAgent waiter;
     Restaurant restaurant;
-    private Menu menu;
+    private Menu menu; // Will allow the customer to order and pay for food
     Timer timer = new Timer();
     GuiCustomer guiCustomer; //for gui
    // ** Agent state **
     private boolean isHungry = false; //hack for gui
     public enum AgentState
-	    {DoingNothing, WaitingInRestaurant, SeatedWithMenu, WaiterCalled, WaitingForFood, Eating};
+	    {DoingNothing, WaitingInRestaurant, WaitingTablesAreFull /*Part 4.1 NN*/,  SeatedWithMenu, WaiterCalled, WaitingForFood, Eating, Paying /*New to v4.1*/};
 	//{NO_ACTION,NEED_SEATED,NEED_DECIDE,NEED_ORDER,NEED_EAT,NEED_LEAVE};
     private AgentState state = AgentState.DoingNothing;//The start state
     public enum AgentEvent 
-	    {gotHungry, beingSeated, decidedChoice, waiterToTakeOrder, foodDelivered, doneEating};
+	    {gotHungry, tablesAreFull /*Part 4.1 NN*/, beingSeated, decidedChoice, waiterToTakeOrder, foodDelivered, doneEating, donePaying /*New to v4.1*/};
     List<AgentEvent> events = new ArrayList<AgentEvent>();
+    
+    /*New to v4.1*/
+    private CashierAgent cashier; // The customer pays this agent before leaving with “wallet” – see below 
+
+    private Bill bill; // Will be given from the waiter and passed to the cashier
+    private volatile double wallet = 0; // Will hold how much money a customer has (will be thread safe) -- This will have to be set externally
+    private volatile double amountOwed = 0; // How much money the customer owes the restaurant (will be thread safe)
+
+    /*Part 4.1 Non-Normative*/
+    // These values all deal with the tables full non normative scenario
+    private boolean willingToWait = false; // Will be set-able with GUI
+    private int waitListSize = 0; // Size of the waitlist
+    private int LOW_WAITLIST = 3; // Number used to determine if the customer will wait in line or not 
+
+    /*Part 4.2 Non-Normative*/
+    private boolean willOnlyPayFully;  // Will be set-able in the GUI or in some other fashion
+
     
     /** Constructor for CustomerAgent class 
      * @param name name of the customer
@@ -92,7 +109,38 @@ public class CustomerAgent extends Agent {
 	stateChanged(); 
     }
 
+    /*New to v4.1*/
+    public void msgThankYouComeAgain() { /*Part 1 Normative*/
+    // Since I am using doubles and NOT dollars/cents for this, I am currently not 
+    // implementing giving change to customers for the sake of simplicity
+    	events.add(AgentEvent.donePaying);
+    	stateChanged();
+    }
 
+    public void msgNextTimePayTheDifference(double difference) { /*Part 1 Non-Normative*/
+    	events.add(AgentEvent.donePaying);
+    	amountOwed+=difference;
+    	stateChanged();
+    }
+
+    /*Part 2 Non-Normative*/
+    public void msgPleaseReorder(Menu menu) {
+    	this.menu = menu;
+    	state = AgentState.WaiterCalled;
+    	events.add(AgentEvent.waiterToTakeOrder);
+    	stateChanged();
+    }
+
+    /*Part 4.1 Non-Normative*/
+    public void msgSorryTablesAreOccupied(int wSize) {
+    	state = AgentState.WaitingTablesAreFull;
+    	events.add(AgentEvent.tablesAreFull);
+    	waitListSize = wSize;
+    	stateChanged();
+    }
+
+    
+    
     /** Scheduler.  Determine what action is called for, and do it. */
     protected boolean pickAndExecuteAnAction() {
 	if (events.isEmpty()) return false;
@@ -107,6 +155,21 @@ public class CustomerAgent extends Agent {
 	    }
 	    // elseif (event == xxx) {}
 	}
+	
+//	/*Part 4 Non-Normative*/
+//	if ($ state s.t. state == AgentState.WaitingTablesAreFull) then
+//		if (event == AgentEvent.tablesAreFull) then
+//			doWaitResponse();
+//			return true;
+//
+	
+	if (state == AgentState.WaitingTablesAreFull) {
+	    if (event == AgentEvent.tablesAreFull)	{
+			doWaitResponse();
+			return true;
+	    }
+	}
+	
 	if (state == AgentState.WaitingInRestaurant) {
 	    if (event == AgentEvent.beingSeated)	{
 		makeMenuChoice();
@@ -135,6 +198,7 @@ public class CustomerAgent extends Agent {
 		return true;
 	    }
 	}
+	///*
 	if (state == AgentState.Eating) {
 	    if (event == AgentEvent.doneEating)	{
 		leaveRestaurant();
@@ -142,7 +206,40 @@ public class CustomerAgent extends Agent {
 		return true;
 	    }
 	}
+	//*/
+	
+//	/*New to v4.1*/
+//	/*Part 1 Normative*/
+//	if ($ state s.t. state == AgentState.Eating) then
+//		if (event == AgentEvent.doneEating) then
+//			payBill(); // Action
+//			state = AgentState.Paying; // Change to appropriate state
+//			return true;
+//
+//	if ($ state s.t. state == AgentState.Paying) then
+//		if (event == AgentEvent.donePaying) then
+//			leaveRestaurant(); // Action
+//			state = AgentState.DoingNothing; // Change to appropriate state
+//			return true;
 
+	/*
+	if (state == AgentState.Eating) {
+	    if (event == AgentEvent.doneEating)	{
+			payBill(); // Action
+			state = AgentState.Paying; // Change to appropriate state
+			return true;
+	    }
+	}
+	
+	if (state == AgentState.Paying) {
+	    if (event == AgentEvent.donePaying)	{
+			leaveRestaurant(); // Action
+			state = AgentState.DoingNothing; // Change to appropriate state
+			return true;
+	    }
+	}
+	*/
+	
 	print("No scheduler rule fired, should not happen in FSM, event="+event+" state="+state);
 	return false;
     }
@@ -201,10 +298,39 @@ public class CustomerAgent extends Agent {
 	isHungry = false;
 	stateChanged();
 	gui.setCustomerEnabled(this); //Message to gui to enable hunger button
-
+    
 	//hack to keep customer getting hungry. Only for non-gui customers
 	if (gui==null) becomeHungryInAWhile();//set a timer to make us hungry.
     }
+    
+    
+	
+	/*New to v4.1*/
+	private void payBill() { // Have the Customer send the bill to the cashier
+//		cashier.msgHereIsCustomerPayment(subtractFromWallet(bill.totalCost), bill); 
+		stateChanged();
+	}
+
+	//-----//
+	private void doWaitResponse() {
+		if (willingToWait == true || waitListSize < LOW_WAITLIST) {
+//			host.msgThankYouIllWait(this);
+			state = AgentState.WaitingInRestaurant;
+		}
+		else {
+//			host.msgSorryIHaveToLeave(this);
+			state = AgentState.DoingNothing;
+		}
+		stateChanged();
+	}
+
+	private double subtractFromWallet (double num) { // Will return how much was subtracted from wallet
+		wallet -= num; 
+		double val = 0;
+		if (wallet < 0) { val  = wallet + num; wallet = 0; return val; }
+		else { return num; }
+	}
+    
     
     /** This starts a timer so the customer will become hungry again.
      * This is a hack that is used when the GUI is not being used */
@@ -256,6 +382,9 @@ public class CustomerAgent extends Agent {
 	return "customer " + getName();
     }
 
+    public void setWallet(double money) { // Set it so that the customer has money
+    	wallet = money;
+    }
     
 }
 

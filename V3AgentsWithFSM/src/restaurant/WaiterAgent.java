@@ -62,6 +62,18 @@ public class WaiterAgent extends Agent {
     Position originalPosition;
     Table[] tables; //the gui tables
     
+    /*New to v4.1*/
+    CashierAgent cashier;
+
+    /*Part 2 Non-Normative*/
+    List<Integer> customerToChangeOrder; // Holds tablenum of customer of change order
+
+    /*Part 3 (Non-)Normative*/
+    private boolean breakButtonPressed = false;
+    
+    private enum willHostAllowBreak {na, pending, yes, no};
+    willHostAllowBreak allowBreak = willHostAllowBreak.na; // instantiate the enum
+    
 
     /** Constructor for WaiterAgent class
      * @param name name of waiter
@@ -159,6 +171,33 @@ public class WaiterAgent extends Agent {
 	stateChanged();
     }
 
+    /*Part 2 Non-Normative*/
+    public void msgOutOfThisItem(String choice, int table) { // Tell customer to reorder
+    	for (MyCustomer c: customers) {
+    		if (c.tableNum == table) {
+    			customerToChangeOrder.add(table);
+        		stateChanged();
+        		break;
+    		}
+    	}
+    }
+
+    /*Part 3 (Non-)Normative*/
+    public void msgGuiButtonPressed() {
+    	if (breakButtonPressed == true) { breakButtonPressed = false; }
+    	else { breakButtonPressed  = true; allowBreak = willHostAllowBreak.pending;}
+    	stateChanged();
+    }
+
+    public void msgYesAfterYourCustomersFinish() {
+    	allowBreak = willHostAllowBreak.yes;
+    	stateChanged();
+    }
+
+    public void msgNoItIsTooBusy() {
+    	allowBreak = willHostAllowBreak.no;
+    	stateChanged();
+    }
 
 
     /** Scheduler.  Determine what action is called for, and do it. */
@@ -182,6 +221,21 @@ public class WaiterAgent extends Agent {
 		    clearTable(c);
 		    return true;
 		}
+	    }
+	    
+//	    /*Part 2 Non-Normative*/
+//	    if ($ c in customersToChangeOrder s.t. $ cust in customers w/cust.tableNum == c) then
+//	    	tellCustomerToChangeOrder(cust);
+//	    	return true;
+
+	    // Queue up a customer who is going to change an order
+	    for(Integer tNum: customerToChangeOrder) {
+		    for(MyCustomer c: customers){
+					if(c.tableNum == tNum) { // A customer has requested a change of order, tell this customer to change the order
+						tellCustomerToChangeOrder(c);
+						return true;
+					}
+			    }
 	    }
 
 	    //Seats the customer if they need it
@@ -207,7 +261,40 @@ public class WaiterAgent extends Agent {
 		    takeOrder(c);
 		    return true;
 		}
-	    }	    
+	    }	   
+	    
+//	    /*Part 3 (Non-)Normative*/
+//	    if (breakButtonPressed == true) then 
+//	    	if (willHostAllowBreak == pending) then
+//	    		host.mayITakeBreak(this);
+//	    if (willHostAllowBreak == no) then 
+//	    doReturnToWork();  return true;
+//	    if (willHostAllowBreak == yes && ~$ c in customers) then 
+//	    doRakeBreak(); return true;
+//	    if (breakButtonPressed == false && onBreak == true) then 
+//	    doReturnToWork();  return true;
+
+	    /*Part 3 (Non-)Normative*/
+	    if (breakButtonPressed == true) { 
+	    	if (allowBreak == willHostAllowBreak.pending) { 
+//	    		host.mayITakeBreak(this);
+	    		return true;
+	    	}
+		    if (allowBreak == willHostAllowBreak.no) {
+		    	doReturnToWork();  
+		    	return true;
+		    }
+		    if (allowBreak == willHostAllowBreak.yes && customers.isEmpty()) { 
+		    	doTakeBreak(); 
+		    	return true;
+		    }
+		    if (breakButtonPressed == false && onBreak == true) { 
+		    	doReturnToWork();  
+		    	return true;
+		    }
+	    }
+	    
+	    
 	}
 	if (!currentPosition.equals(originalPosition)) {
 	    DoMoveToOriginalPosition();//Animation thing
@@ -278,6 +365,32 @@ public class WaiterAgent extends Agent {
 	customer.state = CustomerState.NO_ACTION;
 	stateChanged();
     }
+    
+ 
+    
+    /*Part 2 Non-Normative*/
+    private void  tellCustomerToChangeOrder(MyCustomer cust) {
+//    	cust.cmr.msgPleaseReorder(new Menu(-cust.choice));
+    	cust.state = CustomerState.READY_TO_ORDER;
+    	stateChanged();
+    }
+    
+    /*Part 3 (Non-)Normative*/
+    private void doTakeBreak() {
+    	onBreak = true;
+    	// Make sure to send message about turning on GUI button
+    	stateChanged();
+    }
+
+    private void doReturnToWork() {
+    	onBreak = false;
+	    // Make sure to send message about off on GUI button
+	    breakButtonPressed = false;
+	    allowBreak = willHostAllowBreak.na;
+	    stateChanged();
+    }
+
+    
 
     // Animation Actions
     void DoSeatCustomer (MyCustomer customer){
@@ -439,5 +552,9 @@ public class WaiterAgent extends Agent {
 	return onBreak;
     }
 
+    public void setCashier(CashierAgent cashier) { // Set the cashier
+    	this.cashier = cashier;
+    }
+    
 }
 
