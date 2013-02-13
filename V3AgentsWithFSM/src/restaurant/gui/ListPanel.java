@@ -87,6 +87,7 @@ public class ListPanel extends JPanel implements ActionListener{
 	button.setMinimumSize(buttonSize);
 	button.setMaximumSize(buttonSize);
 	button.addActionListener(this);
+	
 	list.add(button);
 	view.add(button);
 	restPanel.addPerson(type, name);

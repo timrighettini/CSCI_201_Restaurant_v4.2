@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.io.File;
 
+import java.text.*;
 
 /** Main GUI class.
  * Contains the main frame and subsequent panels */
@@ -28,10 +29,10 @@ public class RestaurantGui extends JFrame implements ActionListener{
 
     private Object currentPerson;
     
-    // New GUI variables for v4.1
+    // New GUI variables for v4.1      
     private JPanel customerPanel = new JPanel();
     private JLabel moneyLabel = new JLabel(" Total $:   ");
-    private JTextField customerMoneyTF = new JTextField(5);
+    private JFormattedTextField customerMoneyTF = new JFormattedTextField();
     private JLabel customerMoneyOwedLabelA = new JLabel("Money Owed: ");
     private JLabel customerMoneyOwedLabelB = new JLabel("0.00");
     private JButton payOffButton = new JButton("Pay Debt");
@@ -40,7 +41,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
     
     private JPanel marketPanel = new JPanel();
     private ArrayList<JLabel> marketLabels = new ArrayList<JLabel>();
-    private ArrayList<JTextField> marketTFs = new ArrayList<JTextField>();
+    private Map<String, JTextField> marketTFs = new HashMap<String, JTextField>();
     
     updateGUI cUpdater = new updateGUI(); // Has a timer method to help show the correct values for a customer    
     private javax.swing.Timer updateTimer = new javax.swing.Timer(100, cUpdater);
@@ -105,31 +106,39 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	marketLabels.add(new JLabel("Chikn: "));
 	marketLabels.add(new JLabel("Pizza: "));
 	marketLabels.add(new JLabel("Salad: "));
-	marketTFs.add(new JTextField(10));
-	marketTFs.get(marketTFs.size() - 1).setPreferredSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setMaximumSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setMinimumSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setHorizontalAlignment(SwingConstants.CENTER);
-	marketTFs.add(new JTextField(10));
-	marketTFs.get(marketTFs.size() - 1).setPreferredSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setMaximumSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setMinimumSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setHorizontalAlignment(SwingConstants.CENTER);
-	marketTFs.add(new JTextField(10));
-	marketTFs.get(marketTFs.size() - 1).setPreferredSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setMaximumSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setMinimumSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setHorizontalAlignment(SwingConstants.CENTER);
-	marketTFs.add(new JTextField(10));
-	marketTFs.get(marketTFs.size() - 1).setPreferredSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setMaximumSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setMinimumSize(new Dimension(75, 20));
-	marketTFs.get(marketTFs.size() - 1).setHorizontalAlignment(SwingConstants.CENTER);
+	
+	marketTFs.put("Steak", new JTextField(10));	
+	marketTFs.get("Steak").setPreferredSize(new Dimension(75, 20));
+	marketTFs.get("Steak").setMaximumSize(new Dimension(75, 20));
+	marketTFs.get("Steak").setMinimumSize(new Dimension(75, 20));
+	marketTFs.get("Steak").setHorizontalAlignment(SwingConstants.CENTER);
+	
+	marketTFs.put("Chicken", new JTextField(10));
+	marketTFs.get("Chicken").setPreferredSize(new Dimension(75, 20));
+	marketTFs.get("Chicken").setMaximumSize(new Dimension(75, 20));
+	marketTFs.get("Chicken").setMinimumSize(new Dimension(75, 20));
+	marketTFs.get("Chicken").setHorizontalAlignment(SwingConstants.CENTER);
+	
+	marketTFs.put("Pizza", new JTextField(10));
+	marketTFs.get("Pizza").setPreferredSize(new Dimension(75, 20));
+	marketTFs.get("Pizza").setMaximumSize(new Dimension(75, 20));
+	marketTFs.get("Pizza").setMinimumSize(new Dimension(75, 20));
+	marketTFs.get("Pizza").setHorizontalAlignment(SwingConstants.CENTER);
+	
+	marketTFs.put("Salad", new JTextField(10));
+	marketTFs.get("Salad").setPreferredSize(new Dimension(75, 20));
+	marketTFs.get("Salad").setMaximumSize(new Dimension(75, 20));
+	marketTFs.get("Salad").setMinimumSize(new Dimension(75, 20));
+	marketTFs.get("Salad").setHorizontalAlignment(SwingConstants.CENTER);
 	
 	// Add everything into the panel
-	for (int i = 0; i < marketTFs.size(); i++) {
+	Set<String> tempStrings = marketTFs.keySet();
+		
+	int i = 0;
+	for (String s: tempStrings) { // The sizes of both lists are the same, so this will work
 		marketPanel.add(marketLabels.get(i));
-		marketPanel.add(marketTFs.get(i));
+		marketPanel.add(marketTFs.get(s));
+		i++;
 	}
 	
 	/*
@@ -160,6 +169,8 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	stateCB.setVisible(true);
 	currentPerson = person;
 	
+	cUpdater.setAgent(person); // Set this new agent to the updater
+	
 	if(person instanceof CustomerAgent){
 	    CustomerAgent customer = (CustomerAgent) person;
 	    stateCB.setText("Hungry?");
@@ -169,6 +180,22 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	    "<html><pre>     Name: " + customer.getName() + " </pre></html>");
 	    customerPanel.setVisible(true); // Set my panel to be visible to the customer
 	    marketPanel.setVisible(false);
+	    
+	    // Set all customer text values
+		customerMoneyTF.setValue(String.format("%.2f", (customer.getWallet())));
+		customerMoneyOwedLabelB.setText(String.format("%.2f", (customer.getAmountOwed())));
+		if (customer.getWillingToWait() == true) {
+			willWaitCB.setSelected(true);
+		}
+		else {
+			willWaitCB.setSelected(false);
+		}
+		if (customer.getWillOnlyPayFully() == true) {
+			onlyPayFullyCB.setSelected(true);
+		}
+		else {
+			onlyPayFullyCB.setSelected(false);
+		}
 
 	}else if(person instanceof WaiterAgent){
 	    WaiterAgent waiter = (WaiterAgent) person;
@@ -190,6 +217,13 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	    "<html><pre>     Name: " + market.getName() + " </html>");
 	    customerPanel.setVisible(false); // Set my panel to be NOT visible to the market
 	    marketPanel.setVisible(true);
+	    
+	    // Set MarketAgent values
+		Map<String, Integer> tempInv = market.getInventory();
+		Set<String> tempKeySet = tempInv.keySet();
+		for (String t: tempKeySet) {
+			marketTFs.get(t).setText(Integer.toString(tempInv.get(t))); 
+		}
 	}	
 
 	infoPanel.validate();
@@ -206,7 +240,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 
 	    }else if(currentPerson instanceof WaiterAgent){
 		WaiterAgent w = (WaiterAgent) currentPerson;
-		w.setBreakStatus(stateCB.isSelected());
+		//w.setBreakStatus(stateCB.isSelected()); // Comment this out for now, integrate ASAP
 	    }
 		System.out.println("Check Box Clicked!");
 	}
@@ -251,10 +285,52 @@ public class RestaurantGui extends JFrame implements ActionListener{
     
     private class updateGUI implements ActionListener {
 
+    	Object agent = new Object(); // Will hold a reference to an agent to get/set the appropriate values
+    	
+    	public void setAgent(Object o) {
+    		agent = o;
+    	}
+    	
 		public void actionPerformed(ActionEvent e) {
 			// Do any other actions here
+
 			
-			// Update all customer boxes/fields to the most updated values
+			
+			// Update all customer && market boxes/fields to the most updated values
+			
+			if (agent instanceof CustomerAgent) {
+				CustomerAgent temp = (CustomerAgent) agent;
+				
+				customerMoneyOwedLabelB.setText(String.format("%.2f", (temp.getAmountOwed())));
+				if (temp.getWillingToWait() == true) {
+					willWaitCB.setSelected(true);
+				}
+				else {
+					willWaitCB.setSelected(false);
+				}
+				if (temp.getWillOnlyPayFully() == true) {
+					onlyPayFullyCB.setSelected(true);
+				}
+				else {
+					onlyPayFullyCB.setSelected(false);
+				}
+			}
+			
+			if (agent instanceof MarketAgent) {
+				MarketAgent temp = (MarketAgent) agent;
+				// Make textbox get/set values here
+			}
+			
+			if (agent instanceof WaiterAgent) {
+				WaiterAgent temp = (WaiterAgent) agent;
+				// Make waiter break get/set values here
+				if (temp.isOnBreak() == true) {
+					stateCB.setSelected(true);
+				}
+				else {
+					stateCB.setSelected(false);
+				}
+			}
 			
 		}
     	

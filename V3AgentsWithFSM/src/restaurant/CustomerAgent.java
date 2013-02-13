@@ -37,8 +37,8 @@ public class CustomerAgent extends Agent {
     private CashierAgent cashier; // The customer pays this agent before leaving with “wallet” – see below 
 
     private Bill bill; // Will be given from the waiter and passed to the cashier
-    private volatile double wallet = 0; // Will hold how much money a customer has (will be thread safe) -- This will have to be set externally
-    private volatile double amountOwed = 0; // How much money the customer owes the restaurant (will be thread safe)
+    private volatile double wallet = 15.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00
+    private volatile double amountOwed = 0.00; // How much money the customer owes the restaurant (will be thread safe)
 
     /*Part 4.1 Non-Normative*/
     // These values all deal with the tables full non normative scenario
@@ -415,6 +415,14 @@ public class CustomerAgent extends Agent {
     
     public void setWillingToWait(boolean b) {
     	willingToWait = b;
+    }
+    
+    public boolean getWillOnlyPayFully() {
+    	return willOnlyPayFully;
+    }
+    
+    public void setWillOnlyPayFully(boolean b) {
+    	willOnlyPayFully = b;
     }
     
     public void setCashier(CashierAgent c) {

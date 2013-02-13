@@ -188,4 +188,12 @@ public class MarketAgent extends Agent {
 	public void setCashier(CashierAgent cashier) {
 		this.cashier = cashier;
 	}	
+	
+	public void setInventory(String c, int num) {
+		inventory.put(c, num); // This will override the previous entry and add in the new one
+	}
+	
+	public Map<String, Integer> getInventory() {
+		return inventory;
+	}
 }

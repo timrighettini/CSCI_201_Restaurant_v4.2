@@ -549,7 +549,7 @@ public class WaiterAgent extends Agent {
 
     /** @return true if the waiter is on break, false otherwise */
     public boolean isOnBreak(){
-	return onBreak;
+    	return onBreak;
     }
 
     public void setCashier(CashierAgent cashier) { // Set the cashier
