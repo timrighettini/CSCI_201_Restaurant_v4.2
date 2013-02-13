@@ -4,6 +4,8 @@ import restaurant.gui.RestaurantGui;
 import restaurant.layoutGUI.*;
 import agent.Agent;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.awt.Color;
 
 /** Restaurant customer agent. 
@@ -428,6 +430,5 @@ public class CustomerAgent extends Agent {
     public void setCashier(CashierAgent c) {
     	this.cashier = c;
     }
-    
 }
 

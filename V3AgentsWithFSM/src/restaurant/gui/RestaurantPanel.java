@@ -243,4 +243,9 @@ public class RestaurantPanel extends JPanel {
 		}
 		return true;
 	}
+	
+	// New method to get a reference to the cook for the GUI
+	public CookAgent getCook() {
+		return cook;
+	}
 }

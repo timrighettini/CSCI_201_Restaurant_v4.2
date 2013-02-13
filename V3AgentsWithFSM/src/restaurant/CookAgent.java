@@ -301,6 +301,14 @@ public class CookAgent extends Agent {
 		markets.remove(m);
 	}
 
+	public int getInventoryItemNumber(String t) { // Get the amount that an item has 
+		return inventory.get(t).amount;		
+	}
+	
+	public void setInventoryItemNumber(String choice, int num) { // Set the amount that an item will have
+		inventory.get(choice).amount = num;
+	}
+	
 }
 
 

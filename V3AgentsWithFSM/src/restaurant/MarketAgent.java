@@ -196,4 +196,8 @@ public class MarketAgent extends Agent {
 	public Map<String, Integer> getInventory() {
 		return inventory;
 	}
+	
+	public void setInventory(Map<String, Integer> items) { // Second manner in which to change the inventory
+		inventory = items;		
+	}
 }
