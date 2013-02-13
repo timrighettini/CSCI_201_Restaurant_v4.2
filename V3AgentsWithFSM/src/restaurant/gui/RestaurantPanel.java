@@ -33,6 +33,7 @@ public class RestaurantPanel extends JPanel {
     //Host, cook, waiters and customers
     private HostAgent host = new HostAgent("Prof. W.", nTables);
     private CookAgent cook = new CookAgent("W. Puck", restaurant);
+    
     private Vector<CustomerAgent> customers = new Vector<CustomerAgent>();
     private Vector<WaiterAgent> waiters = new Vector<WaiterAgent>();
 
@@ -42,6 +43,12 @@ public class RestaurantPanel extends JPanel {
     private JPanel group = new JPanel();
 
     private RestaurantGui gui; //reference to main gui
+    
+    // New v4.1 variables
+    private ListPanel marketPanel = new ListPanel(this, "Markets");
+    private CashierAgent cashier = new CashierAgent("Mr. Moneybags");
+    
+    private Vector<MarketAgent> markets = new Vector<MarketAgent>();
 
     public RestaurantPanel(RestaurantGui gui){
 	this.gui = gui;
@@ -104,6 +111,7 @@ public class RestaurantPanel extends JPanel {
 	
 	group.add(waiterPanel);
 	group.add(customerPanel);
+	group.add(marketPanel);
 	
 	initRestLabel();
 	add(restLabel);
@@ -146,6 +154,13 @@ public class RestaurantPanel extends JPanel {
 		    gui.updateInfoPanel(temp);
 	    }
 	}
+    else if(type.equals("Markets")){
+	    for(int i=0; i < markets.size(); i++){
+		MarketAgent temp = markets.get(i);
+		if(temp.getName() == name)
+		    gui.updateInfoPanel(temp);
+	    }
+    }
     }
 	
     /** Adds a customer or waiter to the appropriate list
@@ -156,7 +171,8 @@ public class RestaurantPanel extends JPanel {
 	if(type.equals("Customers")){
 	    CustomerAgent c = new CustomerAgent(name, gui, restaurant);
 	    c.setHost(host);
-	    customers.add(c);
+	    c.setCashier(cashier);
+	    customers.add(c);	    
 	    c.startThread(); //Customer is fsm.
 	    c.setHungry();
 	} else if(type.equals("Waiters")){
@@ -164,9 +180,19 @@ public class RestaurantPanel extends JPanel {
 	    WaiterAgent w = new WaiterAgent(name, aStarTraversal, restaurant, tables);
 	    w.setHost(host);
 	    w.setCook(cook);
+	    w.setCashier(cashier);
 	    host.setWaiter(w);
 	    waiters.add(w);
 	    w.startThread();
+	}
+	
+	else if(type.equals("Markets")){ // New Market instantiation code
+	    MarketAgent m = new MarketAgent(name);
+	    m.setCook(cook);
+	    m.setCashier(cashier);
+	    cook.addMarket(m);	  
+	    markets.add(m);
+	    m.startThread();
 	}
     }	
 

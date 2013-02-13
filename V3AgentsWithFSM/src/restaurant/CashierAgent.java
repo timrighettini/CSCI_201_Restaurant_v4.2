@@ -21,7 +21,7 @@ public class CashierAgent extends Agent {
 
 	private List <Bill> billsToPay; // List of bills received from waiters
 	private List<PayCustomer> customerPayments; // List of customer submitted payments
-	private Map <String, Double> foodPrices; // This will be used to help create bills in billsToPay, since the waiter will not pass an actual bill as an argument to the cashier in “msgHereIsCustomerOrder()”
+	private Map <String, Double> foodPrices = new HashMap<String, Double>(); // This will be used to help create bills in billsToPay, since the waiter will not pass an actual bill as an argument to the cashier in “msgHereIsCustomerOrder()”
 	private volatile double totalMoney = 0.00; // The total cash that the restaurant currently has in stock.  It will be added to when bills are processed and subtracted from when paying to buy food orders.
 	
 	private String name; // Holds the name of the agent

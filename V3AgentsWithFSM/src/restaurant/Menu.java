@@ -15,5 +15,17 @@ public class Menu {
     	5.99, // Salad Price
     	8.99, // Pizza Price
     };
+    
+    public Menu() {
+    	// DO nothing
+    }
+    
+    public Menu(String choice) { // This constructor will eliminate a choice from the menu
+    	for (int i = 0; i < choices.length; i++) {
+    		if (choices[i].equals(choice)) { // Remove the choice from this menu
+    			choices[i] = "unavailable"; // This item cannot be ordered by the customer
+    		}
+    	}
+    }
 }
     

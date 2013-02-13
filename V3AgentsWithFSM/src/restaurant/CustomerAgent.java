@@ -47,7 +47,7 @@ public class CustomerAgent extends Agent {
     private int LOW_WAITLIST = 3; // Number used to determine if the customer will wait in line or not 
 
     /*Part 4.2 Non-Normative*/
-    private boolean willOnlyPayFully;  // Will be set-able in the GUI or in some other fashion
+    private boolean willOnlyPayFully = true;  // Will be set-able in the GUI or in some other fashion
 
     
     /** Constructor for CustomerAgent class 
@@ -272,7 +272,16 @@ public class CustomerAgent extends Agent {
 
     /** Picks a random choice from the menu and sends it to the waiter */
     private void orderFood(){
-	String choice = menu.choices[(int)(Math.random()*4)];
+    	String choice; // Will be instantiated once the customer does not choose "unavailable" 
+    	while (true) {
+    		choice = menu.choices[(int)(Math.random()*4)];
+    		if (choice.equals("unavailable")) {
+    			continue; // The customer cannot order this item, he/she will have to try again
+    		}
+    		else {
+    			break; // Item is orderable, break
+    		}
+    	}
 	print("Ordering the " + choice);
 	waiter.msgHereIsMyChoice(this, choice);
 	stateChanged();
@@ -381,9 +390,35 @@ public class CustomerAgent extends Agent {
     public String toString() {
 	return "customer " + getName();
     }
+    
+    
+    // Other v4.1 values
+    public double getWallet() {
+    	return wallet;
+    }
 
     public void setWallet(double money) { // Set it so that the customer has money
     	wallet = money;
+    }
+    
+    public double getAmountOwed() {
+    	return amountOwed;
+    }
+    
+    public void setAmountOwed(double money) {
+    	amountOwed = money;
+    }
+    
+    public boolean getWillingToWait() {
+    	return willingToWait;
+    }
+    
+    public void setWillingToWait(boolean b) {
+    	willingToWait = b;
+    }
+    
+    public void setCashier(CashierAgent c) {
+    	this.cashier = c;
     }
     
 }

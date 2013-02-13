@@ -1,8 +1,6 @@
 package restaurant;
 
 import agent.Agent;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.*;
 import restaurant.layoutGUI.*;
 import java.awt.Color;
@@ -150,6 +148,10 @@ public class CookAgent extends Agent {
 //   if ($ d in deliveries) then
 //   	addFoodToInventory(d); return true;
 
+    for (Map<String, Integer> d: deliveries) { // If there is a delivery, get the items from it
+    	addFoodToInventory(d);
+    	return true;
+    }
     	
 	//If there exists an order o whose status is done, place o.
 	for(Order o:orders){
@@ -167,11 +169,18 @@ public class CookAgent extends Agent {
 	}
 	
 //	/*Part 2 Normative*/
-//	if (V choice s.t. inventory.get(choice).amounts < threashold) then
+//	if (V choice s.t. inventory.get(choice).amounts < threshold) then
 //		orderFromMarket(new Map<V choice, int num>);
 //		// Implementation detail = getting V choice and num
 //		return true;
 
+	// Get the keys of the inventory and turn it into an array	
+	Set<String> keys = inventory.keySet(); // Iterate through the map
+	for (String k: keys) {
+		if (inventory.get(k).amount < inventory.get(k).threshold) { // If the amount of something in the inventory is < threshold, order that item type
+			orderFromMarket(k);
+		}
+	}
 
 	//we have tried all our rules (in this case only one) and found
 	//nothing to do. So return false to main loop of abstract agent
@@ -222,7 +231,10 @@ public class CookAgent extends Agent {
     }
     
     /*Part 2 Normative*/
-    private void orderFromMarket(Map<String, Integer> items) { // Send order to market
+    private void orderFromMarket(String item) { // Send order to market
+    	// Make an order from the string
+    	Map<String, Integer> items = new HashMap<String, Integer>();
+    	items.put(item, inventory.get(item).MAX - inventory.get(item).threshold); // Max out the order - threshold
 //    	markets.get(nextMarket).msgNeedFoodDelivered(items);
     	stateChanged();
     }
