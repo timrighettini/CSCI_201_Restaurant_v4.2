@@ -438,6 +438,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 				System.out.println("Action performed");
 			}
 			
+			/**** Customer Agent Code ****/
 			if (agent instanceof CustomerAgent) {
 				CustomerAgent temp = (CustomerAgent) agent;
 				
@@ -445,7 +446,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 				if (e.getSource() == customerMoneyTF) { // Then set money for string					
 					String s = (String) customerMoneyTF.getText();
 					double d = 0.00;
-					// This will create a pattern to see if characters are int numeric							
+					// This will create a pattern to see if characters are double numeric							
 					Pattern pat = Pattern.compile("^[.0-9]+$"); 
 					
 					// This will check to make sure that names are int numeric							
@@ -459,15 +460,46 @@ public class RestaurantGui extends JFrame implements ActionListener{
 					}
 				}
 				
-				// DO polling updates here				
+				if (e.getSource() == willWaitCB) { // Change the state of the willWait customer state variable
+					if (temp.getWillingToWait() == true) {
+						temp.setWillingToWait(false);
+					}
+					else {
+						temp.setWillingToWait(true);
+					}
+				}
+				
+				if (e.getSource() == onlyPayFullyCB) { // Change the state of the willOnlyPayFully customer state variable
+					if (temp.getWillOnlyPayFully() == true) {
+						temp.setWillOnlyPayFully(false);
+					}
+					else {
+						temp.setWillOnlyPayFully(true);
+					}
+				}
+				
+				if (e.getSource() == payOffButton) { // If the customer has enough money, pay off the debt and erase the debt
+					if (temp.getWallet() >= temp.getAmountOwed()) { // Then pay off the debt
+						temp.setWallet(temp.getWallet() - temp.getAmountOwed());
+						temp.setAmountOwed(0.00); // Erase the debt
+					}
+				}
+				
+				// DO polling updates here		
+				if (!customerMoneyTF.isFocusOwner()) { // Only update the customer text box when the user is NOT editing it
+					customerMoneyTF.setText(String.format("%.2f", (temp.getWallet())));
+				}
+				
 				customerMoneyOwedLabelB.setText(String.format("%.2f", (temp.getAmountOwed())));
-				if (temp.getWillingToWait() == true) {
+				
+				if (temp.getWillingToWait() == true) { // Update the willing to wait checkbox
 					willWaitCB.setSelected(true);
 				}
 				else {
 					willWaitCB.setSelected(false);
 				}
-				if (temp.getWillOnlyPayFully() == true) {
+				
+				if (temp.getWillOnlyPayFully() == true) { // Update the only pay fully checkbox
 					onlyPayFullyCB.setSelected(true);
 				}
 				else {
@@ -475,13 +507,76 @@ public class RestaurantGui extends JFrame implements ActionListener{
 				}
 			}
 			
+			/***** Market & Cook Agent Code *****/
 			if (agent instanceof MarketAgent) {
 				MarketAgent temp = (MarketAgent) agent;
-				// Make textbox get/set values here
+				Set<String> set = marketTFs.keySet();
+				
+				// DO actions here
+				for (String s: set) {
+					if (e.getSource() == marketTFs.get(s)) {
+						String test = (String) marketTFs.get(s).getText();
+
+						// This will create a pattern to see if characters are int numeric							
+						Pattern pat = Pattern.compile("^[0-9]+$"); 
+						
+						// This will check to make sure that names are int numeric							
+						Matcher match = pat.matcher(test);
+						
+						if (match.find()) { // If all values in the string are correct, convert string to int and then send it to market inventory
+							int i = Integer.valueOf(test);
+							((MarketAgent) agent).setInventory(s, i);
+							requestFocusInWindow();
+							updateInfoValues(temp);
+						}	
+					}
+					if (e.getSource() == cookTFs.get(s)) { // This map has the same keys and is the same size, so the same comparison can be used
+						String test = (String) cookTFs.get(s).getText();
+
+						// This will create a pattern to see if characters are int numeric							
+						Pattern pat = Pattern.compile("^[0-9]+$"); 
+						
+						// This will check to make sure that names are int numeric							
+						Matcher match = pat.matcher(test);
+						
+						if (match.find()) { // If all values in the string are correct, convert string to int and then send it to cook inventory
+							int i = Integer.valueOf(test);
+							restPanel.getCook().setInventoryItemNumber(s, i);
+							requestFocusInWindow();
+							updateInfoValues(temp);
+						}	
+					}
+				}
+				
+				// DO polling updates here	
+			    // Set MarketAgent values
+				Map<String, Integer> tempInv = temp.getInventory();
+				Set<String> tempKeySet = tempInv.keySet();
+				for (String t: tempKeySet) {
+					if (!marketTFs.get(t).isFocusOwner()) { // Only update the text box when the user is NOT editing it
+						marketTFs.get(t).setText(Integer.toString(tempInv.get(t)));
+					}
+				}
+				
+			    // Set CookAgent values
+				for (String t: tempKeySet) {
+					if (!cookTFs.get(t).isFocusOwner()) { // Only update the text box when the user is NOT editing it
+						int value = restPanel.getCook().getInventoryItemNumber(t); // Will get the amount of a certain item from the cook's inventory
+						cookTFs.get(t).setText(Integer.toString(value));
+					}
+				}
 			}
 			
+			/***** Waiter Agent Code *****/
 			if (agent instanceof WaiterAgent) {
 				WaiterAgent temp = (WaiterAgent) agent;
+				
+				if (e.getSource() == stateCB) {
+					// Send message to waiter in an attempt to start the break cycle
+//					temp.msgGuiButtonPressed(); // Uncomment when ready to begin testing
+				}
+				
+				// DO polling updates here
 				// Make waiter break get/set values here
 				if (temp.isOnBreak() == true) {
 					stateCB.setSelected(true);

@@ -39,7 +39,7 @@ public class CustomerAgent extends Agent {
     private CashierAgent cashier; // The customer pays this agent before leaving with “wallet” – see below 
 
     private Bill bill; // Will be given from the waiter and passed to the cashier
-    private volatile double wallet = 15.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00
+    private volatile double wallet = 15.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00, but can be changed in the GUI
     private volatile double amountOwed = 0.00; // How much money the customer owes the restaurant (will be thread safe)
 
     /*Part 4.1 Non-Normative*/
