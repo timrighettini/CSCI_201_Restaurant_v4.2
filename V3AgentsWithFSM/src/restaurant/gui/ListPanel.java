@@ -93,4 +93,13 @@ public class ListPanel extends JPanel implements ActionListener{
 	restPanel.addPerson(type, name);
 	validate();
     }
+    
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+    
 }

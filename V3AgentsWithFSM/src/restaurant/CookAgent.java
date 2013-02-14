@@ -2,6 +2,7 @@ package restaurant;
 
 import agent.Agent;
 import java.util.*;
+
 import restaurant.layoutGUI.*;
 import java.awt.Color;
 
@@ -29,6 +30,10 @@ public class CookAgent extends Agent {
     int FOOD_AMOUNT = 5;
     int THRESHOLD_INIT = 3;
     int MAX_VAL = 10;
+    
+    // New Map to determine what has been ordered
+    Map<String, Boolean> itemOrdered = new HashMap<String, Boolean>();
+
 
     /** Constructor for CookAgent class
      * @param name name of the cook
@@ -39,10 +44,17 @@ public class CookAgent extends Agent {
 	this.name = name;
 	this.restaurant = restaurant;
 	//Create the restaurant's inventory.
-	inventory.put("Steak",new FoodData("Steak", 5));
-	inventory.put("Chicken",new FoodData("Chicken", 4));
-	inventory.put("Pizza",new FoodData("Pizza", 3));
-	inventory.put("Salad",new FoodData("Salad", 2));
+	inventory.put("Steak",new FoodData("Steak", 5, FOOD_AMOUNT));
+	inventory.put("Chicken",new FoodData("Chicken", 4, FOOD_AMOUNT));
+	inventory.put("Pizza",new FoodData("Pizza", 3, FOOD_AMOUNT));
+	inventory.put("Salad",new FoodData("Salad", 2, FOOD_AMOUNT));
+	
+	// Initialize order tracking map
+    itemOrdered.put("Steak", false);
+    itemOrdered.put("Chicken", false);
+    itemOrdered.put("Pizza", false);
+    itemOrdered.put("Salad", false);
+	
     }
     /** Private class to store information about food.
      *  Contains the food type, its cooking time, and ...
@@ -54,12 +66,12 @@ public class CookAgent extends Agent {
 		int amount = FOOD_AMOUNT;
 		int threshold = THRESHOLD_INIT;
 		int MAX = MAX_VAL;
-    
 	
-	public FoodData(String type, double cookTime){
-	    this.type = type;
-	    this.cookTime = cookTime;
-	}
+		public FoodData(String type, double cookTime, int num){
+		    this.type = type;
+		    this.cookTime = cookTime;
+		    this.amount = num;
+		}
     }
     /** Private class to store order information.
      *  Contains the waiter, table number, food item,
@@ -92,11 +104,11 @@ public class CookAgent extends Agent {
 
     /*Part 2 Normative*/
     private class ETA {
-    	int orderTime;
+    	long orderTime;
     	int deliveryTime;
     	Map<String, Integer> items;
     	
-    	public ETA(int o, int d, Map i) {
+    	public ETA(long o, int d, Map i) {
     		orderTime = o;
     		deliveryTime = d;
     		items = i;
@@ -131,12 +143,16 @@ public class CookAgent extends Agent {
     	stateChanged();
     }
 
-    public void msgSorryWeCannotFulfillOrder() {
-    	nextMarket++; // Reset to 0 if past markets.size()
+    public void msgSorryWeCannotFulfillOrder(String item) {
+    	nextMarket++;
+    	if (nextMarket == markets.size()) {// Reset to 0 if == markets.size()
+    		nextMarket = 0;
+    	}
+    	itemOrdered.put(item, false);
     	stateChanged();
     }
 
-    public void msgHereIsYourTrackingInformation(int orderTime, int deliveryTime, Map<String, Integer> items) {
+    public void msgHereIsYourTrackingInformation(long orderTime, int deliveryTime, Map<String, Integer> items) {
     	arrivalTimes.add(new ETA(orderTime, deliveryTime, items));
     	stateChanged();
     }
@@ -178,7 +194,11 @@ public class CookAgent extends Agent {
 	Set<String> keys = inventory.keySet(); // Iterate through the map
 	for (String k: keys) {
 		if (inventory.get(k).amount < inventory.get(k).threshold) { // If the amount of something in the inventory is < threshold, order that item type
-			orderFromMarket(k);
+			if (itemOrdered.get(k) == false) {
+				orderFromMarket(k);
+				return true;
+			}
+			
 		}
 	}
 
@@ -199,7 +219,7 @@ public class CookAgent extends Agent {
     		boolean removeOrder = false; // flag to remove the order
     		for (ETA eta: arrivalTimes) {
     			if (eta.items.get(order.choice) > 0) {
-    				if (eta.deliveryTime > REASONABLE_WAIT) { // If an item of this choice is is NOT coming soon
+    				if ((System.currentTimeMillis() - eta.orderTime) > REASONABLE_WAIT) { // If an item of this choice is is NOT coming soon (REASONABLE_WAIT)
     					removeOrder = true;
     				}
     				else { // The order is coming soon, break out of loop and continue with regular ordering stuff
@@ -232,11 +252,14 @@ public class CookAgent extends Agent {
     
     /*Part 2 Normative*/
     private void orderFromMarket(String item) { // Send order to market
+    	print("Ordering " + item + " from market " + nextMarket);
     	// Make an order from the string
     	Map<String, Integer> items = new HashMap<String, Integer>();
-    	items.put(item, inventory.get(item).MAX - inventory.get(item).threshold); // Max out the order - threshold
-//    	markets.get(nextMarket).msgNeedFoodDelivered(items);
-    	stateChanged();
+    	items.put(item, inventory.get(item).MAX - inventory.get(item).amount); // Max out the order - amount
+    	markets.get(nextMarket).msgNeedFoodDelivered(items);
+    	
+    	itemOrdered.put(item, true);
+    	System.out.println("Item: " + item + " : " + itemOrdered.get(item) );
     }
 
     private void addFoodToInventory(Map<String, Integer> items) { // Fetch a delivery & add contents to inventory
@@ -246,7 +269,13 @@ public class CookAgent extends Agent {
     			arrivalTimes.remove(aT);
     		}
     	}
-    deliveries.remove(items);
+    	
+		Set<String> setKeys = items.keySet(); // The size of setKeys will always be one, but if there ever is more than one item to be ordered, this loop is usable in the future
+		for (String s: setKeys) {
+			itemOrdered.put(s, false); // Set this ordered value to false so that the item can be ordered again if it runs out
+		}    	
+    	
+    	deliveries.remove(items);
     }
 
 
@@ -307,6 +336,7 @@ public class CookAgent extends Agent {
 	
 	public void setInventoryItemNumber(String choice, int num) { // Set the amount that an item will have
 		inventory.get(choice).amount = num;
+		stateChanged(); // This is necessary so that the cook can check the state of the inventory and order items if necessary after that occurs
 	}
 	
 }

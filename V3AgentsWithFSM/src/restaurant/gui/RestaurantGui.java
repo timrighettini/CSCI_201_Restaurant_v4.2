@@ -153,13 +153,27 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	
 	int i = 0;
 	marketPanel.add(marketLabels.get(i));
-	i++;	
-	for (String s: tempStrings) { // The sizes of both lists are the same, so this will work
-		marketPanel.add(marketLabels.get(i));
-		marketPanel.add(marketTFs.get(s));
-		marketTFs.get(s).addActionListener(cUpdater);
-		i++;
-	}
+
+	i++;
+	marketPanel.add(marketLabels.get(i));
+	marketPanel.add(marketTFs.get("Steak"));
+	marketTFs.get("Steak").addActionListener(cUpdater);
+		
+	i++;
+	marketPanel.add(marketLabels.get(i));
+	marketPanel.add(marketTFs.get("Chicken"));
+	marketTFs.get("Chicken").addActionListener(cUpdater);
+	
+	i++;
+	marketPanel.add(marketLabels.get(i));
+	marketPanel.add(marketTFs.get("Pizza"));
+	marketTFs.get("Pizza").addActionListener(cUpdater);
+	
+	i++;
+	marketPanel.add(marketLabels.get(i));
+	marketPanel.add(marketTFs.get("Salad"));
+	marketTFs.get("Salad").addActionListener(cUpdater);
+
 	
 	// Set up the cookPanel
 	cookPanel.setLayout(new BoxLayout(cookPanel,BoxLayout.X_AXIS));
@@ -198,13 +212,26 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	
 	i = 0;
 	cookPanel.add(cookLabels.get(i));
-	i++;	
-	for (String s: tempStrings) { // The sizes of both lists are the same, so this will work
-		cookPanel.add(cookLabels.get(i));
-		cookPanel.add(cookTFs.get(s));
-		cookTFs.get(s).addActionListener(cUpdater);
-		i++;
-	}
+
+	i++;
+	cookPanel.add(cookLabels.get(i));
+	cookPanel.add(cookTFs.get("Steak"));
+	cookTFs.get("Steak").addActionListener(cUpdater);
+		
+	i++;
+	cookPanel.add(cookLabels.get(i));
+	cookPanel.add(cookTFs.get("Chicken"));
+	cookTFs.get("Chicken").addActionListener(cUpdater);
+	
+	i++;
+	cookPanel.add(cookLabels.get(i));
+	cookPanel.add(cookTFs.get("Pizza"));
+	cookTFs.get("Pizza").addActionListener(cUpdater);
+	
+	i++;
+	cookPanel.add(cookLabels.get(i));
+	cookPanel.add(cookTFs.get("Salad"));
+	cookTFs.get("Salad").addActionListener(cUpdater);
 	
 	getContentPane().add(restPanel);
 	getContentPane().add(addTable);
@@ -491,7 +518,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 						System.out.println("Paid off a customer's debt!");
 					}
 					else {
-						System.out.println("Error: You mneed more money to pay off the debt");
+						System.out.println("Error: You need more money to pay off the debt");
 					}
 				}
 				
@@ -535,10 +562,10 @@ public class RestaurantGui extends JFrame implements ActionListener{
 						
 						if (match.find()) { // If all values in the string are correct, convert string to int and then send it to market inventory
 							int i = Integer.valueOf(test);
+							System.out.println("Set the market's inventory");
 							((MarketAgent) agent).setInventory(s, i);
 							requestFocusInWindow();
-							updateInfoValues(temp);
-							System.out.println("Set the market's inventory");
+							updateInfoValues(temp);							
 						}	
 					}
 					if (e.getSource() == cookTFs.get(s)) { // This map has the same keys and is the same size, so the same comparison can be used
@@ -552,10 +579,10 @@ public class RestaurantGui extends JFrame implements ActionListener{
 						
 						if (match.find()) { // If all values in the string are correct, convert string to int and then send it to cook inventory
 							int i = Integer.valueOf(test);
+							System.out.println("Set the cook's inventory");
 							restPanel.getCook().setInventoryItemNumber(s, i);
 							requestFocusInWindow();
-							updateInfoValues(temp);
-							System.out.println("Set the cook's inventory");
+							updateInfoValues(temp);							
 						}	
 					}
 				}

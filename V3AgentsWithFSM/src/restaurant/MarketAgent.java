@@ -15,9 +15,9 @@ public class MarketAgent extends Agent {
 	/*Part 2 Normative*/
 	enum orderState {unprocessed, pending, shipped, delivered}; //status of the order, used below
 	private class Order { // Will holds the cook’s food orders
-		String id; // order id
-		Map<String, Integer> items; // Items ordered
-		orderState state = orderState.unprocessed; // Set the state to unprocessed upon creation (because that is the state is needs to be in)
+		public String id; // order id
+		public Map<String, Integer> items; // Items ordered
+		public orderState state = orderState.unprocessed; // Set the state to unprocessed upon creation (because that is the state is needs to be in)
 		
 		public Order (String id, Map<String, Integer> items) {
 			this.id = id;
@@ -26,16 +26,14 @@ public class MarketAgent extends Agent {
 	}
 
 	private class Payment { // cashier payments
-		double money;
-		String id; // Matched to bills
+		public double money;
+		public String id; // Matched to bills
 		
 		public Payment(double money, String id) {
 			this.money = money;
 			this.id = id;
 		}
 	}
-
-	private List<Bill> billsToPay = new ArrayList<Bill>(); // Bills that the customers need to pay
 
 	// Agent References
 	private CookAgent cook; 
@@ -52,6 +50,8 @@ public class MarketAgent extends Agent {
 	//-----//
 	private Map<String, Integer> inventory = new HashMap<String, Integer>(); // Total amount of each food item
 	private Map<String, Double> foodPrices = new HashMap<String, Double>(); // Will help calculate bills
+	
+	Random rand = new Random(); // Used for generating random order IDs
 	
 	// Other important variables
 	private String name; // Name of the market
@@ -78,7 +78,21 @@ public class MarketAgent extends Agent {
 	// Messages:
 	/*Part 2 Normative*/
 	public void msgNeedFoodDelivered(Map<String, Integer> choices) { // Add cook order to list
-		String orderID = "";
+		// Make the order ID, and MAKE SURE that there are no duplicates!
+		
+		String orderID; // ID for the order
+		
+		while (true) {	
+			orderID = Integer.toString(rand.nextInt(1000000));
+			
+			for (Order o: orders) { // Check orders to make sure that a duplicate order number does not exist
+				if (orderID.equals(o.id)) {
+					continue;
+				}
+			}
+			break; // All order IDs == unique
+		}
+		
 		orders.add(new Order(orderID, choices));
 		stateChanged();
 	}
@@ -128,47 +142,71 @@ public class MarketAgent extends Agent {
 
 	//Actions:
 	/*Part 2 (Non-)Normative*/
-	public void processFoodOrder(Order o) { // Check to see if an order is fillable
+	private void processFoodOrder(Order o) { // Check to see if an order is fillable
+		print("Processing Order: " + o.id);
 		double d = doGetTotalCost(o.items);
 		if (d <= 0) {
-//			cook.msgSorryWeCannotFulfillOrder();
+			Set<String> setKeys = o.items.keySet(); // The size of setKeys will always be one, but if there ever is more than one item to be ordered, this loop is usable in the future
+			for (String s: setKeys) {
+				cook.msgSorryWeCannotFulfillOrder(s);
+			}
 			orders.remove(o);
 	}
 		else {
-//			cashier.msgHereIsYourBill(new Bill(d, o.id, this));
+			cashier.msgHereIsBill(new Bill(d, o.id, this));
 			o.state = orderState.pending;
 		}
 	}
 
-	public void shipFoodOrder(Order o, Payment p) { // Send the order for shipping
+	private void shipFoodOrder(Order o, Payment p) { // Send the order for shipping
+		print("Shipping food order:" + o.id);
 		totalMoney += p.money;
+		print("Total Money = " + totalMoney);
 		doSendOrder(o);
 		cashierPayments.remove(p);
 		stateChanged();
 	}
 
-	public void doSendOrder(final Order o) { // Set up shipping
+	private void doSendOrder(final Order o) { // Set up shipping
 	timer.schedule(new TimerTask() {
 		public void run() {
+			print("Delivering food order:" + o.id);
 			o.state = orderState.delivered;
 			stateChanged();
 		}
 	}, timeForDelivery);
 		o.state = orderState.shipped;
-//		cook.msgHereIsYourTrackingInfo(currentTime, timeForDelivery, o.items);
+		print("Shipped food order:" + o.id);
+		cook.msgHereIsYourTrackingInformation(System.currentTimeMillis(), timeForDelivery, o.items);
 	}
 
-	public void deliverFoodOrder(Order o) {  // Deliver the order to the cook
-//		cook.msgHereIsFoodDelivery(o.items);
+	private void deliverFoodOrder(Order o) {  // Deliver the order to the cook
+		print("Order Delivered: " + o.id);
+		cook.msgHereIsFoodDelivery(o.items);
 		orders.remove(o);
 	}
 
 	//Other Methods:
-	public double doGetTotalCost(Map<String, Integer> items) {
+	private double doGetTotalCost(Map<String, Integer> items) {
 		double d = 0.00;
 		
 		// Create the methodology for determining d
-				
+		Set<String> keys = items.keySet(); // Iterate through the map
+		for (String k: keys) {
+			if (items.get(k) > inventory.get(k)) { // If this market has less items in its inventory than the items Map asked for, then return 0.00 for cost
+				d = 0.00;
+				return d;
+			}
+			else  {// Else, actually make the bill's cost 
+				d += foodPrices.get(k) * items.get(k); // Get the price * number of items to be bought
+			}
+		}
+		
+		// If Cost is created successfully, decrement the inventory of the market appropriately
+		for (String k: keys) {
+			inventory.put(k, (inventory.get(k) - items.get(k))); // Subtract out the appropriate values from the inventory 
+		}
+		
 		return d;
 	} // Will determine the cost of a bill based on what the cooks wants and current market inventory.   returns 0 if inventory cannot handle order.
 

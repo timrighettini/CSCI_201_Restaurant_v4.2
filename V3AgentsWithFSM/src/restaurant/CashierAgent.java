@@ -101,32 +101,37 @@ public class CashierAgent extends Agent {
 	private void checkCustomerPayment(PayCustomer cp, Bill bill) { 
 	// Check to see if cp’s bill matches a bill in the billsToPay dataBase, and then parse information 
 		if (cp.payment == cp.cBill.totalCost) {
-			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is correct");
+			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is correct: " + cp.payment);
 			totalMoney += cp.payment; // Increment the money earned for the restaurant
 			// send a message to customer saying that correct payment amount was fulfilled
 			((CustomerAgent) cp.cBill.agent).msgThankYouComeAgain(); 
 			customerPayments.remove(cp);
 			billsToPay.remove(bill);
 			stateChanged();
+			print("Total Money = " + totalMoney);
 		}	
 		if (cp.payment < cp.cBill.totalCost) {
 			totalMoney += cp.payment; // Increment the money earned for the restaurant
 			// send a message to customer saying that payment was received, but that it was 
 			// not enough: The amount left over will have to be repaid ASAP.	
-			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is short, please repay ASAP!");
+			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is short: " + cp.payment +  ".  Please repay ASAP!");
 			((CustomerAgent) cp.cBill.agent).msgNextTimePayTheDifference(cp.cBill.totalCost - cp.payment /* is amountLeftToPay*/); 
 			customerPayments.remove(cp);
 			billsToPay.remove(bill);
 			stateChanged();
+			print("Total Money = " + totalMoney);
 		}
 	}
 
 	/*Part 2 Normative*/
 	private void payMarketBill(Bill bill) { // Pay the bill sent from a market by using the Agent reference in bill
-		totalMoney -= bill.totalCost;
-//		bill.agent.msgHereIsCashierPayment(bill.totalCost, bill.choice);
-		marketBills.remove(bill);
-		stateChanged();
+		if (bill.agent instanceof MarketAgent) { // Just to be sure...but ONLY marketAgent bills should be sent to this list
+			print("Bill paid to market: " + ((MarketAgent) bill.agent).getName() + ".  Cost: " + bill.totalCost);
+			totalMoney -= bill.totalCost;
+			((MarketAgent) bill.agent).msgHereIsCashierPayment(bill.totalCost, bill.choice);
+			marketBills.remove(bill);
+			stateChanged();	
+		}
 	}
 
 	//Other Methods:

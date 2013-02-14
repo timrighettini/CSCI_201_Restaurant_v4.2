@@ -52,7 +52,7 @@ public class RestaurantPanel extends JPanel {
 
     public RestaurantPanel(RestaurantGui gui){
 	this.gui = gui;
-
+	
 	//intialize the semaphore grid
 	for (int i=0; i<gridX+1 ; i++)
 	    for (int j = 0; j<gridY+1; j++)
