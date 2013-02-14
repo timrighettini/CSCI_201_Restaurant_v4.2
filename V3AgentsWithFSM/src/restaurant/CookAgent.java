@@ -147,9 +147,13 @@ public class CookAgent extends Agent {
     	nextMarket++;
     	if (nextMarket == markets.size()) {// Reset to 0 if == markets.size()
     		nextMarket = 0;
+    		print("No markets can fulfill my order for: " + item + ".  I will try again next time I am awake");
     	}
-    	itemOrdered.put(item, false);
-    	stateChanged();
+    	else {
+    		print("Market " + markets.get(nextMarket - 1).getName() + " could not fulfill my order for " + item  + ", attempting to order from market " + markets.get(nextMarket).getName());
+    		stateChanged(); // Will not indefinitely run the scheduler
+    	}
+    	itemOrdered.put(item, false);    	
     }
 
     public void msgHereIsYourTrackingInformation(long orderTime, int deliveryTime, Map<String, Integer> items) {
@@ -194,11 +198,10 @@ public class CookAgent extends Agent {
 	Set<String> keys = inventory.keySet(); // Iterate through the map
 	for (String k: keys) {
 		if (inventory.get(k).amount < inventory.get(k).threshold) { // If the amount of something in the inventory is < threshold, order that item type
-			if (itemOrdered.get(k) == false) {
+			if (itemOrdered.get(k) == false && markets.size() > 0) { // The order cannot already be ordered, and markets must exist for this operation to occur
 				orderFromMarket(k);
 				return true;
-			}
-			
+			}			
 		}
 	}
 
@@ -252,14 +255,14 @@ public class CookAgent extends Agent {
     
     /*Part 2 Normative*/
     private void orderFromMarket(String item) { // Send order to market
-    	print("Ordering " + item + " from market " + nextMarket);
+      	print("Ordering " + item + " from market " + markets.get(nextMarket));
     	// Make an order from the string
     	Map<String, Integer> items = new HashMap<String, Integer>();
     	items.put(item, inventory.get(item).MAX - inventory.get(item).amount); // Max out the order - amount
     	markets.get(nextMarket).msgNeedFoodDelivered(items);
     	
     	itemOrdered.put(item, true);
-    	System.out.println("Item: " + item + " : " + itemOrdered.get(item) );
+    	//System.out.println("Item: " + item + " : " + itemOrdered.get(item) );
     }
 
     private void addFoodToInventory(Map<String, Integer> items) { // Fetch a delivery & add contents to inventory

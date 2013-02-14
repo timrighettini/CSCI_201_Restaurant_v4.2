@@ -148,13 +148,16 @@ public class MarketAgent extends Agent {
 		if (d <= 0) {
 			Set<String> setKeys = o.items.keySet(); // The size of setKeys will always be one, but if there ever is more than one item to be ordered, this loop is usable in the future
 			for (String s: setKeys) {
+				print("Order Cannot be Fulfilled -- Order Cancelled: " + o.id + " " +  o.items);
 				cook.msgSorryWeCannotFulfillOrder(s);
 			}
 			orders.remove(o);
-	}
+		}
 		else {
 			cashier.msgHereIsBill(new Bill(d, o.id, this));
 			o.state = orderState.pending;
+			print("Order Successfully Fulfilled: " + o.id + " " +  o.items);
+
 		}
 	}
 
