@@ -174,7 +174,7 @@ public class WaiterAgent extends Agent {
     /*Part 2 Non-Normative*/
     public void msgOutOfThisItem(String choice, int table) { // Tell customer to reorder
     	for (MyCustomer c: customers) {
-    		if (c.tableNum == table) {
+    		if (c.tableNum == table && !customerToChangeOrder.contains(table)) {
     			customerToChangeOrder.add(table);
         		stateChanged();
         		break;
@@ -384,9 +384,17 @@ public class WaiterAgent extends Agent {
  
     
     /*Part 2 Non-Normative*/
-    private void  tellCustomerToChangeOrder(MyCustomer cust) {
-//    	cust.cmr.msgPleaseReorder(new Menu(-cust.choice));
-    	cust.state = CustomerState.READY_TO_ORDER;
+    private void tellCustomerToChangeOrder(MyCustomer cust) {
+    	print(cust.cmr + " --  Sorry but the order cannot be placed.  Is there something else that you want?");
+    	cust.cmr.msgPleaseReorder(new Menu(cust.choice));
+    	// Remove the index from the customerToChangeOrder List
+    	for (int i = 0; i < customerToChangeOrder.size(); i++) {
+    		if (customerToChangeOrder.get(i) == cust.tableNum) { // To prevent concurrent modification exception
+    			customerToChangeOrder.remove(i);
+    			break;
+    		}
+    	}
+    	cust.state = CustomerState.NO_ACTION;
     	stateChanged();
     }
     

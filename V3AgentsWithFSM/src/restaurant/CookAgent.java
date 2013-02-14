@@ -28,7 +28,7 @@ public class CookAgent extends Agent {
     
     // Constants
     int FOOD_AMOUNT = 5;
-    int THRESHOLD_INIT = 3;
+    int THRESHOLD_INIT = 2;
     int MAX_VAL = 10;
     
     // New Map to determine what has been ordered
@@ -44,9 +44,9 @@ public class CookAgent extends Agent {
 	this.name = name;
 	this.restaurant = restaurant;
 	//Create the restaurant's inventory.
-	inventory.put("Steak",new FoodData("Steak", 5, FOOD_AMOUNT));
-	inventory.put("Chicken",new FoodData("Chicken", 4, FOOD_AMOUNT));
-	inventory.put("Pizza",new FoodData("Pizza", 3, FOOD_AMOUNT));
+	inventory.put("Steak",new FoodData("Steak", 5, 0));
+	inventory.put("Chicken",new FoodData("Chicken", 4, 0));
+	inventory.put("Pizza",new FoodData("Pizza", 3, 0));
 	inventory.put("Salad",new FoodData("Salad", 2, FOOD_AMOUNT));
 	
 	// Initialize order tracking map
@@ -197,9 +197,9 @@ public class CookAgent extends Agent {
 	// Get the keys of the inventory and turn it into an array	
 	Set<String> keys = inventory.keySet(); // Iterate through the map
 	for (String k: keys) {
-		if (inventory.get(k).amount < inventory.get(k).threshold) { // If the amount of something in the inventory is < threshold, order that item type
+		if (inventory.get(k).amount <= inventory.get(k).threshold) { // If the amount of something in the inventory is < threshold, order that item type
 			if (itemOrdered.get(k) == false && markets.size() > 0) { // The order cannot already be ordered, and markets must exist for this operation to occur
-				orderFromMarket(k);
+				//orderFromMarket(k);
 				return true;
 			}			
 		}
@@ -218,11 +218,12 @@ public class CookAgent extends Agent {
      * @param order
      */
     private void cookOrder(Order order){
-    	if (inventory.get(order.choice).amount == 0) {
-    		boolean removeOrder = false; // flag to remove the order
+    	if (inventory.get(order.choice).amount <= 0) {
+    		boolean removeOrder = true; // flag to remove the order
     		for (ETA eta: arrivalTimes) {
-    			if (eta.items.get(order.choice) > 0) {
-    				if ((System.currentTimeMillis() - eta.orderTime) > REASONABLE_WAIT) { // If an item of this choice is is NOT coming soon (REASONABLE_WAIT)
+    			if (eta.items.get(order.choice) != null) { // If an order for this item actually exists
+    				if ((System.currentTimeMillis() - eta.orderTime) > eta.deliveryTime - REASONABLE_WAIT) { 
+    					// If an item of this choice is is NOT coming soon (if time ordered - currentTime > deliveryTime - REASONABLE_WAIT)
     					removeOrder = true;
     				}
     				else { // The order is coming soon, break out of loop and continue with regular ordering stuff
@@ -232,7 +233,8 @@ public class CookAgent extends Agent {
     			}
     		}
     		if (removeOrder == true) { // If no delivery is coming soon for the proper ingredients
-//    			order.waiter.msgOutOfThisItem(order.choice, order.tableNum);
+    			print("Out of item: " + order.choice + ".  Telling " + order.waiter + " to get a different order.");
+    			order.waiter.msgOutOfThisItem(order.choice, order.tableNum);
     			orders.remove(order);  			
     		}
     	    else { // Continue as normal
@@ -293,6 +295,9 @@ public class CookAgent extends Agent {
     }
 
     private void DoCooking(final Order order){
+    // Decrement the inventory foodData amount for this specific item by 1
+    inventory.get(order.choice).amount -= 1;
+    	
 	print("Cooking:" + order + " for table:" + (order.tableNum+1));
 	//put it on the grill. gui stuff
 	order.food = new Food(order.choice.substring(0,2),new Color(0,255,255), restaurant);

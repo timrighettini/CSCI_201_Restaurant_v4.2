@@ -129,8 +129,8 @@ public class CustomerAgent extends Agent {
     /*Part 2 Non-Normative*/
     public void msgPleaseReorder(Menu menu) {
     	this.menu = menu;
-    	state = AgentState.WaiterCalled;
-    	events.add(AgentEvent.waiterToTakeOrder);
+    	state = AgentState.SeatedWithMenu;
+    	events.add(AgentEvent.decidedChoice);
     	stateChanged();
     }
 

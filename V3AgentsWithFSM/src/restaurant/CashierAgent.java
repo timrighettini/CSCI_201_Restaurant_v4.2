@@ -126,8 +126,8 @@ public class CashierAgent extends Agent {
 	/*Part 2 Normative*/
 	private void payMarketBill(Bill bill) { // Pay the bill sent from a market by using the Agent reference in bill
 		if (bill.agent instanceof MarketAgent) { // Just to be sure...but ONLY marketAgent bills should be sent to this list
-			print("Bill paid to market: " + ((MarketAgent) bill.agent).getName() + ".  Cost: " + bill.totalCost);
 			totalMoney -= bill.totalCost;
+			print("Bill paid to market: " + ((MarketAgent) bill.agent).getName() + ".  Cost: " + bill.totalCost + ".  Totalmoney = " + totalMoney);
 			((MarketAgent) bill.agent).msgHereIsCashierPayment(bill.totalCost, bill.choice);
 			marketBills.remove(bill);
 			stateChanged();	

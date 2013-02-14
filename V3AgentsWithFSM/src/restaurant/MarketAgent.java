@@ -13,7 +13,7 @@ public class MarketAgent extends Agent {
 
 	//Data: 
 	/*Part 2 Normative*/
-	enum orderState {unprocessed, pending, shipped, delivered}; //status of the order, used below
+	enum orderState {unprocessed, processing, pending, packaging, shipped, delivered}; //status of the order, used below
 	private class Order { // Will holds the cook’s food orders
 		public String id; // order id
 		public Map<String, Integer> items; // Items ordered
@@ -142,8 +142,17 @@ public class MarketAgent extends Agent {
 
 	//Actions:
 	/*Part 2 (Non-)Normative*/
-	private void processFoodOrder(Order o) { // Check to see if an order is fillable
+	private void processFoodOrder(final Order o) { // Check to see if an order is fillable
 		print("Processing Order: " + o.id + " " +  o.items);
+		o.state = orderState.processing; // Set the order state to processing, so that nothing weird happens with the scheduler
+		timer.schedule(new TimerTask() {
+			public void run() {				
+				doProcessFoodOrder(o); // Simulate a delay for processing the order
+			}			
+		}, 2000);
+	}
+	
+	private void doProcessFoodOrder (Order o) {
 		double d = doGetTotalCost(o.items);
 		if (d <= 0) {
 			Set<String> setKeys = o.items.keySet(); // The size of setKeys will always be one, but if there ever is more than one item to be ordered, this loop is usable in the future
@@ -156,18 +165,22 @@ public class MarketAgent extends Agent {
 		else {
 			cashier.msgHereIsBill(new Bill(d, o.id, this));
 			o.state = orderState.pending;
-			print("Order Successfully Fulfilled: " + o.id + " " +  o.items);
-
+			print("Order Successfully Fulfilled: " + o.id + " " +  o.items + ".  Bill sent to " + cashier.getName());
 		}
 	}
 
-	private void shipFoodOrder(Order o, Payment p) { // Send the order for shipping
-		print("Shipping food order: " + o.id + " " +  o.items);
+	private void shipFoodOrder(final Order o, final Payment p) { // Send the order for shipping
 		totalMoney += p.money;
-		print("Total Money = " + totalMoney);
-		doSendOrder(o);
-		cashierPayments.remove(p);
-		stateChanged();
+		print("Packaging food order: " + o.id + " " +  o.items + ".  Total Money = " + totalMoney);
+		o.state = orderState.packaging; // Set the order state to packaging, so that nothing weird happens with the scheduler
+		timer.schedule(new TimerTask() {
+			public void run() {
+				doSendOrder(o); // Simulate time for ppackaging the order
+				cashierPayments.remove(p);
+				stateChanged();
+			}
+			
+		}, 1500);
 	}
 
 	private void doSendOrder(final Order o) { // Set up shipping
