@@ -43,7 +43,7 @@ public class MarketAgent extends Agent {
 	private List<Payment> cashierPayments = new ArrayList<Payment>(); // Payments from the cashier.  bill.choice will the id of an order instead of the item choice itself
 
 	private volatile double totalMoney = 0.00; // Money that the market has, this value may not be implemented unless it is needed in v4.2
-	private int timeForDelivery; // Shipping time used to estimate arrival times
+	private int timeForDelivery = 10000; // Shipping time used to estimate arrival times in milliseconds
 
 	private Timer timer = new Timer(); // Used to simulate shipping times for orders
 
@@ -143,7 +143,7 @@ public class MarketAgent extends Agent {
 	//Actions:
 	/*Part 2 (Non-)Normative*/
 	private void processFoodOrder(Order o) { // Check to see if an order is fillable
-		print("Processing Order: " + o.id);
+		print("Processing Order: " + o.id + " " +  o.items);
 		double d = doGetTotalCost(o.items);
 		if (d <= 0) {
 			Set<String> setKeys = o.items.keySet(); // The size of setKeys will always be one, but if there ever is more than one item to be ordered, this loop is usable in the future
@@ -159,7 +159,7 @@ public class MarketAgent extends Agent {
 	}
 
 	private void shipFoodOrder(Order o, Payment p) { // Send the order for shipping
-		print("Shipping food order:" + o.id);
+		print("Shipping food order: " + o.id + " " +  o.items);
 		totalMoney += p.money;
 		print("Total Money = " + totalMoney);
 		doSendOrder(o);
@@ -170,18 +170,18 @@ public class MarketAgent extends Agent {
 	private void doSendOrder(final Order o) { // Set up shipping
 	timer.schedule(new TimerTask() {
 		public void run() {
-			print("Delivering food order:" + o.id);
+			print("Delivering food order: " + o.id + " " +  o.items);
 			o.state = orderState.delivered;
 			stateChanged();
 		}
 	}, timeForDelivery);
 		o.state = orderState.shipped;
-		print("Shipped food order:" + o.id);
+		print("Shipped food order: " + o.id + " " +  o.items);
 		cook.msgHereIsYourTrackingInformation(System.currentTimeMillis(), timeForDelivery, o.items);
 	}
 
 	private void deliverFoodOrder(Order o) {  // Deliver the order to the cook
-		print("Order Delivered: " + o.id);
+		print("Order Delivered: " + o.id + " " +  o.items);
 		cook.msgHereIsFoodDelivery(o.items);
 		orders.remove(o);
 	}

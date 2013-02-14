@@ -267,13 +267,15 @@ public class CookAgent extends Agent {
     	for (ETA aT: arrivalTimes) {
     		if (aT.items == items) {
     			arrivalTimes.remove(aT);
+    			break;
     		}
     	}
     	
 		Set<String> setKeys = items.keySet(); // The size of setKeys will always be one, but if there ever is more than one item to be ordered, this loop is usable in the future
 		for (String s: setKeys) {
+			inventory.get(s).amount += items.get(s); // Add the items from the order into the inventory
 			itemOrdered.put(s, false); // Set this ordered value to false so that the item can be ordered again if it runs out
-		}    	
+		}   
     	
     	deliveries.remove(items);
     }
