@@ -105,6 +105,7 @@ public class RestaurantPanel extends JPanel {
 
 	host.startThread();
 	cook.startThread();
+	cashier.startThread(); // Start the thread of the cashier
 
 	setLayout(new GridLayout(1,2, 20,20));
 	group.setLayout(new GridLayout(1,2, 10,10));

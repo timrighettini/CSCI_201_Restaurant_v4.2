@@ -39,7 +39,7 @@ public class CustomerAgent extends Agent {
     private CashierAgent cashier; // The customer pays this agent before leaving with “wallet” – see below 
 
     private Bill bill; // Will be given from the waiter and passed to the cashier
-    private volatile double wallet = 15.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00, but can be changed in the GUI
+    private volatile double wallet = 16.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00, but can be changed in the GUI
     private volatile double amountOwed = 0.00; // How much money the customer owes the restaurant (will be thread safe)
 
     /*Part 4.1 Non-Normative*/
@@ -101,9 +101,10 @@ public class CustomerAgent extends Agent {
 
     /** Waiter sends this when the food is ready 
      * @param choice the food that is done cooking for the customer to eat */
-    public void msgHereIsYourFood(String choice) {
-	events.add(AgentEvent.foodDelivered);
-	stateChanged();
+    public void msgHereIsYourFood(Bill bill) {
+    	this.bill = bill;
+    	events.add(AgentEvent.foodDelivered);
+    	stateChanged();
     }
     /** Timer sends this when the customer has finished eating */
     public void msgDoneEating() {
@@ -200,7 +201,7 @@ public class CustomerAgent extends Agent {
 		return true;
 	    }
 	}
-	///*
+	/*
 	if (state == AgentState.Eating) {
 	    if (event == AgentEvent.doneEating)	{
 		leaveRestaurant();
@@ -224,7 +225,7 @@ public class CustomerAgent extends Agent {
 //			state = AgentState.DoingNothing; // Change to appropriate state
 //			return true;
 
-	/*
+	///*
 	if (state == AgentState.Eating) {
 	    if (event == AgentEvent.doneEating)	{
 			payBill(); // Action
@@ -240,7 +241,7 @@ public class CustomerAgent extends Agent {
 			return true;
 	    }
 	}
-	*/
+	//*/
 	
 	print("No scheduler rule fired, should not happen in FSM, event="+event+" state="+state);
 	return false;
@@ -275,10 +276,37 @@ public class CustomerAgent extends Agent {
     /** Picks a random choice from the menu and sends it to the waiter */
     private void orderFood(){
     	String choice; // Will be instantiated once the customer does not choose "unavailable" 
-    	while (true) {
+    	Map<String, Boolean> cannotAfford = new HashMap<String, Boolean>(); // This map will keep track of which items the customer cannot afford
+    	boolean canAffordAnItem = false; // If this value is true, then the customer can afford something
+    	
+    	for (int i = 0; i < menu.prices.length; i++) { // Will see which food choices the customer can afford 
+    		if (menu.prices[i] > wallet) { // Item is too expensive
+    			cannotAfford.put(menu.choices[i], false);    			
+    		}
+    		else {
+    			cannotAfford.put(menu.choices[i], true);
+    			canAffordAnItem = true;
+    		}    		
+    	}
+    	
+    	if (canAffordAnItem == false && willOnlyPayFully == true) { // Then the customer will leave the restaurant 
+    		timer.schedule(new TimerTask(){
+    		    public void run(){		    
+    	    		print("Cannot afford anything in the restaurant.  Preparing to Leave.");
+    	    		state = AgentState.Paying;
+    	    		events.add(AgentEvent.donePaying);
+    	    		stateChanged();
+    		    }
+    		}, 1500);
+    		return;
+    	}
+    	
+    	while (true) { // Choice loop
     		choice = menu.choices[(int)(Math.random()*4)];
-    		if (choice.equals("unavailable")) {
-    			continue; // The customer cannot order this item, he/she will have to try again
+    		if (choice.equals("unavailable") || (cannotAfford.get(choice) == false && willOnlyPayFully == true)) {
+    			continue; 
+    			// The customer cannot order this item because it cannot be afforded legitimately or it is unavailable, he/she will have to try again
+    			// Of course, if willOnlyPayFully == false, the item is available, and the customer cannot afford it, the customer will order anyway...
     		}
     		else {
     			break; // Item is orderable, break
@@ -318,7 +346,8 @@ public class CustomerAgent extends Agent {
 	
 	/*New to v4.1*/
 	private void payBill() { // Have the Customer send the bill to the cashier
-//		cashier.msgHereIsCustomerPayment(subtractFromWallet(bill.totalCost), bill); 
+		print("Paying the bill...");
+		cashier.msgHereIsCustomerPayment(subtractFromWallet(bill.totalCost), bill); 
 		stateChanged();
 	}
 
@@ -336,6 +365,7 @@ public class CustomerAgent extends Agent {
 	}
 
 	private double subtractFromWallet (double num) { // Will return how much was subtracted from wallet
+		print("Subtracted " + num + " from my wallet");
 		wallet -= num; 
 		double val = 0;
 		if (wallet < 0) { val  = wallet + num; wallet = 0; return val; }

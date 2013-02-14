@@ -355,7 +355,22 @@ public class WaiterAgent extends Agent {
     private void giveFoodToCustomer(MyCustomer customer) {
 	DoGiveFoodToCustomer(customer);//Animation
 	customer.state = CustomerState.NO_ACTION;
-	customer.cmr.msgHereIsYourFood(customer.choice);
+	
+	// Generate a price for the food from the menu
+	Menu m = new Menu();
+	double price = 0.00;
+	for (int i = 0; i < m.choices.length; i++) {
+		if (m.choices[i] == customer.choice) {
+			price = m.prices[i];
+		}
+	}
+
+	// Send the messages to the customer and waiter 
+	customer.cmr.msgHereIsYourFood(new Bill(price, customer.choice, customer.cmr) /*New to v4.1*/);
+	cashier.msgHereIsCustomerOrder(new Bill(price, customer.choice, customer.cmr) /*New to v4.1*/);
+	
+	print("Bills sent for " + customer.cmr.getName());
+	
 	stateChanged();
     }
     /** Starts a timer to clear the table 
@@ -433,7 +448,9 @@ public class WaiterAgent extends Agent {
      * @param customer customer who needs removed from list */
     private void endCustomer(MyCustomer customer){ 
 	print("Table " + (customer.tableNum+1) + " is cleared!");
-	customer.food.remove(); //remove the food from table animation
+	if (customer.food != null) { // If the customer actually HAS food!
+		customer.food.remove(); //remove the food from table animation
+	}
 	host.msgTableIsFree(customer.tableNum);
 	customers.remove(customer);
 	stateChanged();

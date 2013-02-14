@@ -435,7 +435,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 		
 			// Update all customer && market boxes/fields to the most updated values
 			if (e.getSource() != updateTimer) {
-				System.out.println("Action performed");
+				System.out.print("Action performed: ");
 			}
 			
 			/**** Customer Agent Code ****/
@@ -457,6 +457,10 @@ public class RestaurantGui extends JFrame implements ActionListener{
 						temp.setWallet(d);
 						requestFocusInWindow();
 						updateInfoValues(temp);
+						System.out.println("Changed customer money");
+					}
+					else {
+						System.out.println("Error: enter decimal number for customer money!");
 					}
 				}
 				
@@ -467,6 +471,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 					else {
 						temp.setWillingToWait(true);
 					}
+					System.out.println("Set will wait button");
 				}
 				
 				if (e.getSource() == onlyPayFullyCB) { // Change the state of the willOnlyPayFully customer state variable
@@ -476,12 +481,17 @@ public class RestaurantGui extends JFrame implements ActionListener{
 					else {
 						temp.setWillOnlyPayFully(true);
 					}
+					System.out.println("Set will only pay fully button");
 				}
 				
 				if (e.getSource() == payOffButton) { // If the customer has enough money, pay off the debt and erase the debt
 					if (temp.getWallet() >= temp.getAmountOwed()) { // Then pay off the debt
 						temp.setWallet(temp.getWallet() - temp.getAmountOwed());
 						temp.setAmountOwed(0.00); // Erase the debt
+						System.out.println("Paid off a customer's debt!");
+					}
+					else {
+						System.out.println("Error: You mneed more money to pay off the debt");
 					}
 				}
 				
@@ -528,6 +538,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 							((MarketAgent) agent).setInventory(s, i);
 							requestFocusInWindow();
 							updateInfoValues(temp);
+							System.out.println("Set the market's inventory");
 						}	
 					}
 					if (e.getSource() == cookTFs.get(s)) { // This map has the same keys and is the same size, so the same comparison can be used
@@ -544,6 +555,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 							restPanel.getCook().setInventoryItemNumber(s, i);
 							requestFocusInWindow();
 							updateInfoValues(temp);
+							System.out.println("Set the cook's inventory");
 						}	
 					}
 				}
@@ -584,6 +596,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 				else {
 					stateCB.setSelected(false);
 				}
+				System.out.println("Set the waiter's break button");
 			}
 			
 		}

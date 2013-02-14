@@ -19,8 +19,8 @@ public class CashierAgent extends Agent {
 		}
 	}
 
-	private List <Bill> billsToPay; // List of bills received from waiters
-	private List<PayCustomer> customerPayments; // List of customer submitted payments
+	private List <Bill> billsToPay = new ArrayList<Bill>(); // List of bills received from waiters
+	private List<PayCustomer> customerPayments = new ArrayList<PayCustomer>(); // List of customer submitted payments
 	private Map <String, Double> foodPrices = new HashMap<String, Double>(); // This will be used to help create bills in billsToPay, since the waiter will not pass an actual bill as an argument to the cashier in “msgHereIsCustomerOrder()”
 	private volatile double totalMoney = 0.00; // The total cash that the restaurant currently has in stock.  It will be added to when bills are processed and subtracted from when paying to buy food orders.
 	
@@ -40,12 +40,12 @@ public class CashierAgent extends Agent {
 	}
 
 	/*Part 2 Normative*/
-	List<Bill> marketBills; // Bills that come from markets – market agent is given as a reference in the bill itself
+	List<Bill> marketBills = new ArrayList<Bill>(); // Bills that come from markets – market agent is given as a reference in the bill itself
 
 	//Messages:
 	/*Part 1 Normative*/
-	public void msgHereIsCustomerOrder(CustomerAgent customer, String choice) { // The waiter will send what his/her customer orders to the cashier, and then the cashier will generate a bill from this information
-		billsToPay.add(new Bill(0.00 /*Add in appropriate value here ASAP*/, choice, customer));
+	public void msgHereIsCustomerOrder(Bill bill) { // The waiter will send what his/her customer orders to the cashier, and then the cashier will generate a bill from this information
+		billsToPay.add(bill);
 		stateChanged();
 	}
 
@@ -101,9 +101,10 @@ public class CashierAgent extends Agent {
 	private void checkCustomerPayment(PayCustomer cp, Bill bill) { 
 	// Check to see if cp’s bill matches a bill in the billsToPay dataBase, and then parse information 
 		if (cp.payment == cp.cBill.totalCost) {
+			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is correct");
 			totalMoney += cp.payment; // Increment the money earned for the restaurant
 			// send a message to customer saying that correct payment amount was fulfilled
-//			cp.cBill.agent.msgThankYouComeAgain(); 
+			((CustomerAgent) cp.cBill.agent).msgThankYouComeAgain(); 
 			customerPayments.remove(cp);
 			billsToPay.remove(bill);
 			stateChanged();
@@ -112,7 +113,8 @@ public class CashierAgent extends Agent {
 			totalMoney += cp.payment; // Increment the money earned for the restaurant
 			// send a message to customer saying that payment was received, but that it was 
 			// not enough: The amount left over will have to be repaid ASAP.	
-//			cp.cBill.agent.msgNextTimePayTheDifference(cp.cBill.totalCost - cp.payment /* is amountLeftToPay*/); 
+			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is short, please repay ASAP!");
+			((CustomerAgent) cp.cBill.agent).msgNextTimePayTheDifference(cp.cBill.totalCost - cp.payment /* is amountLeftToPay*/); 
 			customerPayments.remove(cp);
 			billsToPay.remove(bill);
 			stateChanged();
