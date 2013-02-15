@@ -196,7 +196,7 @@ public class MarketAgent extends Agent {
 		}
 	}, timeForDelivery * (rand.nextInt(9) + 1)); // Will make the time anywhere 
 		o.state = orderState.shipped;
-		print("Shipped food order: " + o.id + " " +  o.items);
+		print("Shipped food order: " + o.id + " " +  o.items + ".  Estimated time for delivery (in milliseconds): " + (timeForDelivery * (rand.nextInt(9) + 1)));
 		cook.msgHereIsYourTrackingInformation(System.currentTimeMillis(), timeForDelivery, o.items);
 	}
 

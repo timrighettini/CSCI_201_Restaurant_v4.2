@@ -474,6 +474,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 		CustomerAgent c = (CustomerAgent) currentPerson;
 		c.setHungry();
 		stateCB.setEnabled(false);
+		requestFocusInWindow();
 
 	    }else if(currentPerson instanceof WaiterAgent){
 		WaiterAgent w = (WaiterAgent) currentPerson;
@@ -558,7 +559,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 					}
 					else {
 						System.out.println("Error: enter decimal number for customer money!");
-					}
+					}					
 				}
 				
 				if (e.getSource() == willWaitCB) { // Change the state of the willWait customer state variable
