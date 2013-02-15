@@ -1,6 +1,9 @@
 package restaurant;
 
 import agent.Agent;
+
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 
 public class CashierAgent extends Agent {
@@ -23,6 +26,7 @@ public class CashierAgent extends Agent {
 	private List<PayCustomer> customerPayments = new ArrayList<PayCustomer>(); // List of customer submitted payments
 	private Map <String, Double> foodPrices = new HashMap<String, Double>(); // This will be used to help create bills in billsToPay, since the waiter will not pass an actual bill as an argument to the cashier in “msgHereIsCustomerOrder()”
 	private volatile double totalMoney = 0.00; // The total cash that the restaurant currently has in stock.  It will be added to when bills are processed and subtracted from when paying to buy food orders.
+	DecimalFormat df = new DecimalFormat("######.##");
 	
 	private String name; // Holds the name of the agent
 	
@@ -37,6 +41,8 @@ public class CashierAgent extends Agent {
 		foodPrices.put("Chicken", 10.99);
 		foodPrices.put("Pizza", 5.99);
 		foodPrices.put("Salad", 8.99);
+		
+		df.setRoundingMode(RoundingMode.UP);
 	}
 
 	/*Part 2 Normative*/
@@ -101,25 +107,25 @@ public class CashierAgent extends Agent {
 	private void checkCustomerPayment(PayCustomer cp, Bill bill) { 
 	// Check to see if cp’s bill matches a bill in the billsToPay dataBase, and then parse information 
 		if (cp.payment == cp.cBill.totalCost) {
-			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is correct: " + cp.payment);
+			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is correct: " + df.format(cp.payment));
 			totalMoney += cp.payment; // Increment the money earned for the restaurant
 			// send a message to customer saying that correct payment amount was fulfilled
 			((CustomerAgent) cp.cBill.agent).msgThankYouComeAgain(); 
 			customerPayments.remove(cp);
 			billsToPay.remove(bill);
 			stateChanged();
-			print("Total Money = " + totalMoney);
+			print("Total Money = " + df.format(totalMoney));
 		}	
 		if (cp.payment < cp.cBill.totalCost) {
 			totalMoney += cp.payment; // Increment the money earned for the restaurant
 			// send a message to customer saying that payment was received, but that it was 
 			// not enough: The amount left over will have to be repaid ASAP.	
-			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is short: " + cp.payment +  ".  Please repay ASAP!");
+			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is short: " + df.format(cp.payment) +  ".  Please repay ASAP!");
 			((CustomerAgent) cp.cBill.agent).msgNextTimePayTheDifference(cp.cBill.totalCost - cp.payment /* is amountLeftToPay*/); 
 			customerPayments.remove(cp);
 			billsToPay.remove(bill);
 			stateChanged();
-			print("Total Money = " + totalMoney);
+			print("Total Money = " + df.format(totalMoney));
 		}
 	}
 
@@ -127,7 +133,7 @@ public class CashierAgent extends Agent {
 	private void payMarketBill(Bill bill) { // Pay the bill sent from a market by using the Agent reference in bill
 		if (bill.agent instanceof MarketAgent) { // Just to be sure...but ONLY marketAgent bills should be sent to this list
 			totalMoney -= bill.totalCost;
-			print("Bill paid to market: " + ((MarketAgent) bill.agent).getName() + ".  Cost: " + bill.totalCost + ".  Totalmoney = " + totalMoney);
+			print("Bill paid to market: " + ((MarketAgent) bill.agent).getName() + ".  Cost: " + df.format(bill.totalCost) + ".  Totalmoney = " + df.format(totalMoney));
 			((MarketAgent) bill.agent).msgHereIsCashierPayment(bill.totalCost, bill.choice);
 			marketBills.remove(bill);
 			stateChanged();	

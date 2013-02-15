@@ -2,6 +2,8 @@ package restaurant;
 
 import agent.Agent;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import restaurant.layoutGUI.*;
@@ -43,7 +45,7 @@ public class MarketAgent extends Agent {
 	private List<Payment> cashierPayments = new ArrayList<Payment>(); // Payments from the cashier.  bill.choice will the id of an order instead of the item choice itself
 
 	private volatile double totalMoney = 0.00; // Money that the market has, this value may not be implemented unless it is needed in v4.2
-	private int timeForDelivery = 10000; // Shipping time used to estimate arrival times in milliseconds
+	private int timeForDelivery = 4000; // Shipping time used to estimate arrival times in milliseconds
 
 	private Timer timer = new Timer(); // Used to simulate shipping times for orders
 
@@ -56,6 +58,7 @@ public class MarketAgent extends Agent {
 	// Other important variables
 	private String name; // Name of the market
 	int STARTING_NUM = 10; // This will hold how much of each item a market will start with.
+	DecimalFormat df = new DecimalFormat("######.##");
 	
 	// Constructor
 	public MarketAgent(String name) {
@@ -68,11 +71,12 @@ public class MarketAgent extends Agent {
 		inventory.put("Pizza", STARTING_NUM);
 		inventory.put("Salad", STARTING_NUM);
 		
-		// Initialize the foodPrices Map -- Sets up the prices for food
-		foodPrices.put("Steak", 15.99);
-		foodPrices.put("Chicken", 10.99);
-		foodPrices.put("Pizza", 5.99);
-		foodPrices.put("Salad", 8.99);
+		// Initialize the foodPrices Map -- Sets up the prices for food -- 1/4 of what the restaurant charges customers
+		foodPrices.put("Steak", 3.99);
+		foodPrices.put("Chicken", 2.75);
+		foodPrices.put("Pizza", 2.49);
+		foodPrices.put("Salad", 1.49);
+		df.setRoundingMode(RoundingMode.UP);
 	}
 
 	// Messages:
@@ -171,11 +175,11 @@ public class MarketAgent extends Agent {
 
 	private void shipFoodOrder(final Order o, final Payment p) { // Send the order for shipping
 		totalMoney += p.money;
-		print("Packaging food order: " + o.id + " " +  o.items + ".  Total Money = " + totalMoney);
+		print("Packaging food order: " + o.id + " " +  o.items + ".  Total Money = " + df.format(totalMoney));
 		o.state = orderState.packaging; // Set the order state to packaging, so that nothing weird happens with the scheduler
 		timer.schedule(new TimerTask() {
 			public void run() {
-				doSendOrder(o); // Simulate time for ppackaging the order
+				doSendOrder(o); // Simulate time for packaging the order
 				cashierPayments.remove(p);
 				stateChanged();
 			}
@@ -190,7 +194,7 @@ public class MarketAgent extends Agent {
 			o.state = orderState.delivered;
 			stateChanged();
 		}
-	}, timeForDelivery);
+	}, timeForDelivery * (rand.nextInt(9) + 1)); // Will make the time anywhere 
 		o.state = orderState.shipped;
 		print("Shipped food order: " + o.id + " " +  o.items);
 		cook.msgHereIsYourTrackingInformation(System.currentTimeMillis(), timeForDelivery, o.items);

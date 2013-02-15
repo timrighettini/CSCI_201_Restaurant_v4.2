@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.File;
+import java.math.RoundingMode;
 
 import java.text.*;
 
@@ -42,6 +43,11 @@ public class RestaurantGui extends JFrame implements ActionListener{
     private JCheckBox onlyPayFullyCB = new JCheckBox("Pay Fully");
     private JCheckBox willWaitCB = new JCheckBox("Will Wait");
     
+    // Bottom customer panel used to control what the customers order
+    private JPanel customerOrderPanel = new JPanel();
+    private JLabel customerOrderLabel = new JLabel("Choose what the customer orders: ");
+    private Map<String, JCheckBox> customerOrderButtons = new HashMap<String, JCheckBox>();
+    
     // For a market's information
     private JPanel marketPanel = new JPanel();
     private ArrayList<JLabel> marketLabels = new ArrayList<JLabel>();
@@ -55,6 +61,8 @@ public class RestaurantGui extends JFrame implements ActionListener{
     updateGUI cUpdater = new updateGUI(); // Has a timer method to help show the correct values for a customer    
     
     private javax.swing.Timer updateTimer = new javax.swing.Timer(100, cUpdater);
+    
+    DecimalFormat df = new DecimalFormat();
 
     /** Constructor for RestaurantGui class.
      * Sets up all the gui components. */
@@ -62,6 +70,8 @@ public class RestaurantGui extends JFrame implements ActionListener{
 
 	super("Restaurant Application");
 
+	df.setRoundingMode(RoundingMode.UP);
+	
 	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	setBounds(50,50, WINDOWX, WINDOWY);
 
@@ -79,6 +89,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 
 	stateCB.setVisible(false);
 	stateCB.addActionListener(this);
+	stateCB.addActionListener(cUpdater); // Add my functionality into the old functionality 
 
 	infoPanel.setLayout(new GridLayout(1,5, 30,0));
 	infoPanel.add(infoLabel);
@@ -115,6 +126,44 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	payOffButton.addActionListener(cUpdater);
 	onlyPayFullyCB.addActionListener(cUpdater);
 	willWaitCB.addActionListener(cUpdater);
+	
+	// Do the same for the customerOrderPanel
+	customerOrderPanel.setLayout(new BoxLayout(customerOrderPanel,BoxLayout.X_AXIS));
+	customerOrderPanel.add(customerOrderLabel);
+	
+	customerOrderButtons.put("Steak", new JCheckBox("Steak"));	
+	customerOrderButtons.get("Steak").setPreferredSize(new Dimension(85, 25));
+	customerOrderButtons.get("Steak").setMaximumSize(new Dimension(85, 25));
+	customerOrderButtons.get("Steak").setMinimumSize(new Dimension(85, 25));
+	customerOrderButtons.get("Steak").setHorizontalAlignment(SwingConstants.CENTER);
+	
+	customerOrderButtons.put("Chicken", new JCheckBox("Chicken"));
+	customerOrderButtons.get("Chicken").setPreferredSize(new Dimension(85, 25));
+	customerOrderButtons.get("Chicken").setMaximumSize(new Dimension(85, 25));
+	customerOrderButtons.get("Chicken").setMinimumSize(new Dimension(85, 25));
+	customerOrderButtons.get("Chicken").setHorizontalAlignment(SwingConstants.CENTER);
+	
+	customerOrderButtons.put("Pizza", new JCheckBox("Pizza"));
+	customerOrderButtons.get("Pizza").setPreferredSize(new Dimension(85, 25));
+	customerOrderButtons.get("Pizza").setMaximumSize(new Dimension(85, 25));
+	customerOrderButtons.get("Pizza").setMinimumSize(new Dimension(85, 25));
+	customerOrderButtons.get("Pizza").setHorizontalAlignment(SwingConstants.CENTER);
+	
+	customerOrderButtons.put("Salad", new JCheckBox("Salad"));
+	customerOrderButtons.get("Salad").setPreferredSize(new Dimension(85, 25));
+	customerOrderButtons.get("Salad").setMaximumSize(new Dimension(85, 25));
+	customerOrderButtons.get("Salad").setMinimumSize(new Dimension(85, 25));
+	customerOrderButtons.get("Salad").setHorizontalAlignment(SwingConstants.CENTER);
+	
+	customerOrderPanel.add(customerOrderButtons.get("Steak"));
+	customerOrderPanel.add(customerOrderButtons.get("Chicken"));
+	customerOrderPanel.add(customerOrderButtons.get("Pizza"));
+	customerOrderPanel.add(customerOrderButtons.get("Salad"));
+	
+	customerOrderButtons.get("Steak").addActionListener(cUpdater);
+	customerOrderButtons.get("Chicken").addActionListener(cUpdater);
+	customerOrderButtons.get("Pizza").addActionListener(cUpdater);
+	customerOrderButtons.get("Salad").addActionListener(cUpdater);
 	
 	// Set up the marketPanel
 	marketPanel.setLayout(new BoxLayout(marketPanel,BoxLayout.X_AXIS));
@@ -238,12 +287,14 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	getContentPane().add(infoPanel);
 	// Add new panels
 	getContentPane().add(customerPanel);
+	getContentPane().add(customerOrderPanel);
 	getContentPane().add(marketPanel);
 	getContentPane().add(cookPanel);
 	
 	customerPanel.setVisible(false); // Set my panel to be NOT visible until a customer is clicked on
 	marketPanel.setVisible(false); // Only set this panel to visible when a market is clicked
 	cookPanel.setVisible(false); // Only set this panel to visible when a market is clicked
+	customerOrderPanel.setVisible(false); // Set my panel to be NOT visible until a customer is clicked on 
 	updateTimer.start(); // Set the updating timer
 	
 	addTable.addActionListener(this);
@@ -269,6 +320,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	    customerPanel.setVisible(true); // Set my panel to be visible to the customer
 	    marketPanel.setVisible(false);
 	    cookPanel.setVisible(false); // Only set this panel to visible when a market is clicked
+		customerOrderPanel.setVisible(true); // Set my panel to be NOT visible until a customer is clicked on
 	    
 	    // Set all customer text values
 		customerMoneyTF.setText(String.format("%.2f", (customer.getWallet())));
@@ -285,6 +337,12 @@ public class RestaurantGui extends JFrame implements ActionListener{
 		else {
 			onlyPayFullyCB.setSelected(false);
 		}
+		
+		// Set all orderState values
+		Set<String> strings = customerOrderButtons.keySet();
+		for (String s: strings) {
+			customerOrderButtons.get(s).setSelected(customer.getOrderState(s));
+		}
 
 	}else if(person instanceof WaiterAgent){
 	    WaiterAgent waiter = (WaiterAgent) person;
@@ -296,6 +354,8 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	    customerPanel.setVisible(false); // Set my panel to be NOT visible to the waiter
 	    marketPanel.setVisible(false);
 	    cookPanel.setVisible(false); // Only set this panel to visible when a market is clicked
+		customerOrderPanel.setVisible(false); // Set my panel to be NOT visible until a customer is clicked on
+
 	}
 	
 	else if(person instanceof MarketAgent){
@@ -308,6 +368,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	    customerPanel.setVisible(false); // Set my panel to be NOT visible to the market
 	    marketPanel.setVisible(true);
 	    cookPanel.setVisible(true); // Only set this panel to visible when a market is clicked
+		customerOrderPanel.setVisible(false); // Set my panel to be NOT visible until a customer is clicked on
 	    
 	    // Set MarketAgent values
 		Map<String, Integer> tempInv = market.getInventory();
@@ -340,6 +401,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 		    customerPanel.setVisible(true); // Set my panel to be visible to the customer
 		    marketPanel.setVisible(false);
 		    cookPanel.setVisible(false); // Only set this panel to visible when a market is clicked
+			customerOrderPanel.setVisible(true); // Set my panel to be NOT visible until a customer is clicked on
 		    
 		    // Set all customer text values
 			customerMoneyTF.setText(String.format("%.2f", (customer.getWallet())));
@@ -356,6 +418,12 @@ public class RestaurantGui extends JFrame implements ActionListener{
 			else {
 				onlyPayFullyCB.setSelected(false);
 			}
+			
+			// Set all orderState values
+			Set<String> strings = customerOrderButtons.keySet();
+			for (String s: strings) {
+				customerOrderButtons.get(s).setSelected(customer.getOrderState(s));
+			}
 
 		}else if(person instanceof WaiterAgent){
 		    WaiterAgent waiter = (WaiterAgent) person;
@@ -367,6 +435,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 		    customerPanel.setVisible(false); // Set my panel to be NOT visible to the waiter
 		    marketPanel.setVisible(false);
 		    cookPanel.setVisible(false); // Only set this panel to visible when a market is clicked
+			customerOrderPanel.setVisible(false); // Set my panel to be NOT visible until a customer is clicked on
 		}
 		
 		else if(person instanceof MarketAgent){
@@ -379,6 +448,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 		    customerPanel.setVisible(false); // Set my panel to be NOT visible to the market
 		    marketPanel.setVisible(true);
 		    cookPanel.setVisible(true); // Only set this panel to visible when a market is clicked
+			customerOrderPanel.setVisible(false); // Set my panel to be NOT visible until a customer is clicked on
 		    
 		    // Set MarketAgent values
 			Map<String, Integer> tempInv = market.getInventory();
@@ -522,6 +592,18 @@ public class RestaurantGui extends JFrame implements ActionListener{
 					}
 				}
 				
+				// Set appropriate orderState values
+				Set<String> strings = customerOrderButtons.keySet();
+				for (String s: strings) {
+					if (customerOrderButtons.get(s) == e.getSource()) {
+						if (temp.getOrderState(s) == false)
+							temp.setOrderState(s, true); // Invert the state
+						else
+							temp.setOrderState(s, false); // Invert the state
+						System.out.println("Set "  + temp.getName() +  "'s Orderstate for " + s);
+					}
+				}
+				
 				// DO polling updates here		
 				if (!customerMoneyTF.isFocusOwner()) { // Only update the customer text box when the user is NOT editing it
 					customerMoneyTF.setText(String.format("%.2f", (temp.getWallet())));
@@ -541,6 +623,11 @@ public class RestaurantGui extends JFrame implements ActionListener{
 				}
 				else {
 					onlyPayFullyCB.setSelected(false);
+				}
+				
+				// Set all orderState values
+				for (String s: strings) {
+					customerOrderButtons.get(s).setSelected(temp.getOrderState(s));
 				}
 			}
 			
@@ -613,6 +700,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 				if (e.getSource() == stateCB) {
 					// Send message to waiter in an attempt to start the break cycle
 //					temp.msgGuiButtonPressed(); // Uncomment when ready to begin testing
+					System.out.println("Set the waiter's break button");
 				}
 				
 				// DO polling updates here
@@ -623,7 +711,6 @@ public class RestaurantGui extends JFrame implements ActionListener{
 				else {
 					stateCB.setSelected(false);
 				}
-				System.out.println("Set the waiter's break button");
 			}
 			
 		}

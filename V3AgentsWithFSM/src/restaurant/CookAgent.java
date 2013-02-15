@@ -28,7 +28,7 @@ public class CookAgent extends Agent {
     
     // Constants
     int FOOD_AMOUNT = 5;
-    int THRESHOLD_INIT = 2;
+    int THRESHOLD_INIT = 3;
     int MAX_VAL = 10;
     
     // New Map to determine what has been ordered
@@ -44,9 +44,9 @@ public class CookAgent extends Agent {
 	this.name = name;
 	this.restaurant = restaurant;
 	//Create the restaurant's inventory.
-	inventory.put("Steak",new FoodData("Steak", 5, 0));
-	inventory.put("Chicken",new FoodData("Chicken", 4, 0));
-	inventory.put("Pizza",new FoodData("Pizza", 3, 0));
+	inventory.put("Steak",new FoodData("Steak", 5, FOOD_AMOUNT));
+	inventory.put("Chicken",new FoodData("Chicken", 4, FOOD_AMOUNT));
+	inventory.put("Pizza",new FoodData("Pizza", 3, FOOD_AMOUNT));
 	inventory.put("Salad",new FoodData("Salad", 2, FOOD_AMOUNT));
 	
 	// Initialize order tracking map
@@ -199,7 +199,7 @@ public class CookAgent extends Agent {
 	for (String k: keys) {
 		if (inventory.get(k).amount <= inventory.get(k).threshold) { // If the amount of something in the inventory is < threshold, order that item type
 			if (itemOrdered.get(k) == false && markets.size() > 0) { // The order cannot already be ordered, and markets must exist for this operation to occur
-				//orderFromMarket(k);
+				orderFromMarket(k);
 				return true;
 			}			
 		}

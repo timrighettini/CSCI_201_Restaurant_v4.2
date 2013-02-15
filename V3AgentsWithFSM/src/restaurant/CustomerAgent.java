@@ -41,6 +41,8 @@ public class CustomerAgent extends Agent {
     private Bill bill; // Will be given from the waiter and passed to the cashier
     private volatile double wallet = 16.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00, but can be changed in the GUI
     private volatile double amountOwed = 0.00; // How much money the customer owes the restaurant (will be thread safe)
+    
+    private Map<String, Boolean> orderState = new HashMap<String, Boolean>();
 
     /*Part 4.1 Non-Normative*/
     // These values all deal with the tables full non normative scenario
@@ -62,14 +64,28 @@ public class CustomerAgent extends Agent {
 	this.name = name;
 	this.restaurant = restaurant;
 	guiCustomer = new GuiCustomer(name.substring(0,2), new Color(0,255,0), restaurant);
+	
+	// Initialize the orderState map so that the customer will be able to order every type of item
+	orderState.put("Steak", true);
+	orderState.put("Chicken", true);
+	orderState.put("Pizza", true);
+	orderState.put("Salad", true);	
     }
+    
     public CustomerAgent(String name, Restaurant restaurant) {
 	super();
 	this.gui = null;
 	this.name = name;
 	this.restaurant = restaurant;
 	guiCustomer = new GuiCustomer(name.substring(0,1), new Color(0,255,0), restaurant);
+	
+	// Initialize the orderState map so that the customer will be able to order every type of item
+	orderState.put("Steak", true);
+	orderState.put("Chicken", true);
+	orderState.put("Pizza", true);
+	orderState.put("Salad", true);	
     }
+    
     // *** MESSAGES ***
     /** Sent from GUI to set the customer as hungry */
     public void setHungry() {
@@ -281,10 +297,10 @@ public class CustomerAgent extends Agent {
     	
     	for (int i = 0; i < menu.prices.length; i++) { // Will see which food choices the customer can afford 
     		if (menu.prices[i] > wallet) { // Item is too expensive
-    			cannotAfford.put(menu.choices[i], false);    			
+    			cannotAfford.put(menu.choices[i], true);    			
     		}
     		else {
-    			cannotAfford.put(menu.choices[i], true);
+    			cannotAfford.put(menu.choices[i], false);
     			canAffordAnItem = true;
     		}    		
     	}
@@ -302,11 +318,15 @@ public class CustomerAgent extends Agent {
     	}
     	
     	while (true) { // Choice loop
-    		choice = menu.choices[(int)(Math.random()*4)];
-    		if (choice.equals("unavailable") || (cannotAfford.get(choice) == false && willOnlyPayFully == true)) {
+    		int choiceNum = 0;
+    		choiceNum = (int)(Math.random()*4);
+    		choice = menu.choices[choiceNum];
+    		if (menu.unavailableItems[choiceNum] == true || (cannotAfford.get(choice) == true && willOnlyPayFully == true) || orderState.get(choice) == false) {
     			continue; 
     			// The customer cannot order this item because it cannot be afforded legitimately or it is unavailable, he/she will have to try again
     			// Of course, if willOnlyPayFully == false, the item is available, and the customer cannot afford it, the customer will order anyway...
+    			// However, if the orderState for this value is false, the customer will not be able to order the item no matter what 
+    			// >> it's for ease with testing the non-nromative cook/waiter/customer reordering case
     		}
     		else {
     			break; // Item is orderable, break
@@ -460,5 +480,31 @@ public class CustomerAgent extends Agent {
     public void setCashier(CashierAgent c) {
     	this.cashier = c;
     }
+    
+    public boolean getOrderState(String s) {
+    	return orderState.get(s);
+    }
+    
+    public void setOrderState(String s, boolean b) {
+    	orderState.put(s, b);
+    	
+    	// If all states are set to false, put them all back to true -- the customer HAS to order something, you know...
+    	Set<String> strings = orderState.keySet();
+    	boolean allFalse = true; // Check to see if all the values are really false
+    	for (String str: strings) {
+    		if (orderState.get(str) == true) {
+    			allFalse = false;
+    			break;
+    		}
+    	}
+    	
+    	if (allFalse == true) { // If so, then set all orderState values to true
+    	   	for (String str: strings) {
+        		orderState.put(str, true);        		
+        	}
+    	}    	
+    }
+    
 }
 
+ 
