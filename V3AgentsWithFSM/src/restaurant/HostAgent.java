@@ -116,6 +116,7 @@ public class HostAgent extends Agent {
     
     /*Part 3 (Non-)Normative*/
     public void msgMayITakeABreak(WaiterAgent waiter) {
+    	print("I got break message " + waiter.getName());
     	waitersWhoWantToBreak.add(waiter);
     	stateChanged();
     }
@@ -162,52 +163,52 @@ public class HostAgent extends Agent {
 		    }
 		    return true;
 		}
-	    }
-	    
-	    /*Part 4 Non-Normative*/
-//	    if ($ t in tablesFullCustomers) then
-//	    	if (t.willWait == pending) then 
-//	    		doSendCustomerWaitingMessage(c.cmr);
-//	    return true;
-//	    	else
-//	    		doAddCustomerToWaitList(c);
-//	    		return true;
-//
-//	    if ($ w in waitersWhoWantToBreak) then /*Part 3 (Non-)Normative*/
-//	    	if (restaurant ~busy) then 
-//	    		// determining “busy” will be done in implementation
-//	    		doMessageWaiterBreak(w, true);
-//	    return true;
-//	    	else 
-//	    		doMessageWaiterBreak(w, false);
-//	    		return true;
-//	    	return true;
-
-	    // Check to see if any non-waitlist customers are in need of service 
-	    for (PotentialCustomer t: tablesFullCustomers) {
-	    	if (t.willWait == customerState.pending) {
-	    		doSendCustomerWaitingMessage(t.cmr); // Send cmr a message to see if he/she wants to wait
-	    		return true;
-	    	}
-	    	else {
-	    		doAddCustomerToWaitList(t); // do (not) add the customer to the waitlist after the response has been received
-	    		return true;
-	    	}
-	    }
-	    
-	    // Check to see if any waiters would like to go on break
-	    for (WaiterAgent w: waitersWhoWantToBreak) {
-	    	if (!checkRestaurantBusy()) { // If restaurant is NOT busy, allow break
-	    		doMessageWaiterBreak(w, true);
-	    		return true;
-	    	}
-	    	else { // Do not allow break
-	    		doMessageWaiterBreak(w, false);
-	    		return true;
-	    	}
-	    }
-	    
+	    }      
 	}
+	
+    /*Part 4 Non-Normative*/
+//    if ($ t in tablesFullCustomers) then
+//    	if (t.willWait == pending) then 
+//    		doSendCustomerWaitingMessage(c.cmr);
+//    return true;
+//    	else
+//    		doAddCustomerToWaitList(c);
+//    		return true;
+//
+//    if ($ w in waitersWhoWantToBreak) then /*Part 3 (Non-)Normative*/
+//    	if (restaurant ~busy) then 
+//    		// determining “busy” will be done in implementation
+//    		doMessageWaiterBreak(w, true);
+//    return true;
+//    	else 
+//    		doMessageWaiterBreak(w, false);
+//    		return true;
+//    	return true;
+
+    // Check to see if any non-waitlist customers are in need of service 
+    for (PotentialCustomer t: tablesFullCustomers) {
+    	if (t.willWait == customerState.pending) {
+    		doSendCustomerWaitingMessage(t.cmr); // Send cmr a message to see if he/she wants to wait
+    		return true;
+    	}
+    	else {
+    		doAddCustomerToWaitList(t); // do (not) add the customer to the waitlist after the response has been received
+    		return true;
+    	}
+    }
+    
+    print("Here");
+    // Check to see if any waiters would like to go on break
+    for (WaiterAgent w: waitersWhoWantToBreak) {
+    	if (!checkRestaurantBusy()) { // If restaurant is NOT busy, allow break
+    		doMessageWaiterBreak(w, true);
+    		return true;
+    	}
+    	else { // Do not allow break
+    		doMessageWaiterBreak(w, false);
+    		return true;
+    	}
+    }
 
 	//we have tried all our rules (in this case only one) and found
 	//nothing to do. So return false to main loop of abstract agent
@@ -234,10 +235,12 @@ public class HostAgent extends Agent {
     /*Part 3 (Non-)Normative*/
     private void doMessageWaiterBreak(WaiterAgent w, boolean b) {
 	    if (b == true) { 
-//	    	w.msgYesAfterYourCustomersFinish();
+	    	print(w.getName() + ", you may take a break when all of your customers leave.");
+	    	w.msgYesAfterYourCustomersFinish();
 	    }
 	    else  {
-//	    	w.msgNoItIsTooBusy();
+	    	print(w.getName() + ", you may not take a break.");
+	    	w.msgNoItIsTooBusy();
 	    }
 	    	waitersWhoWantToBreak.remove(w);
 	    	stateChanged();
@@ -249,7 +252,7 @@ public class HostAgent extends Agent {
     	stateChanged();
     }
 
-    private void  doAddCustomerToWaitList(PotentialCustomer c) {
+    private void doAddCustomerToWaitList(PotentialCustomer c) {
     	if (c.willWait == customerState.yes) 
     		waitList.add(c.cmr);
     	tablesFullCustomers.remove(c);
@@ -257,7 +260,7 @@ public class HostAgent extends Agent {
     }
     
     private boolean checkRestaurantBusy() { // Will check to see if the restaurant is busy
-    	if ((waitList.size() == 0)) { // If there are no customers to service, return true -- more complicated conditions will be added later
+    	if ((waitList.size() == 0)) { // If there are no customers to service, return false -- more complicated conditions will be added later
     		return false;
     	}
     	else {

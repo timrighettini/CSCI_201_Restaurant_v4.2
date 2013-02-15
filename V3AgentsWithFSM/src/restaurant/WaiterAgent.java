@@ -69,9 +69,9 @@ public class WaiterAgent extends Agent {
     List<Integer> customerToChangeOrder = new ArrayList<Integer>(); // Holds tablenum of customer of change order
 
     /*Part 3 (Non-)Normative*/
-    private boolean breakButtonPressed = false;
+    private boolean breakButtonPressed = false; // Set this to false to start, or else everything gets blow up
     
-    private enum willHostAllowBreak {na, pending, yes, no};
+    private enum willHostAllowBreak {na, pending, yes, no, waiting};
     willHostAllowBreak allowBreak = willHostAllowBreak.na; // instantiate the enum
     
 
@@ -184,8 +184,15 @@ public class WaiterAgent extends Agent {
 
     /*Part 3 (Non-)Normative*/
     public void msgGuiButtonPressed() {
-    	if (breakButtonPressed == true) { breakButtonPressed = false; }
-    	else { breakButtonPressed  = true; allowBreak = willHostAllowBreak.pending;}
+    	if (breakButtonPressed == true) { 
+    		breakButtonPressed = false;
+    		print("GUI break button pressed OFF!");
+    	}
+    	else {
+    		breakButtonPressed = true; 
+    		allowBreak = willHostAllowBreak.pending;
+    		print("GUI break button pressed ON!");
+    	}
     	stateChanged();
     }
 
@@ -263,39 +270,41 @@ public class WaiterAgent extends Agent {
 		}
 	    }	   
 	    
-//	    /*Part 3 (Non-)Normative*/
-//	    if (breakButtonPressed == true) then 
-//	    	if (willHostAllowBreak == pending) then
-//	    		host.mayITakeBreak(this);
-//	    if (willHostAllowBreak == no) then 
-//	    doReturnToWork();  return true;
-//	    if (willHostAllowBreak == yes && ~$ c in customers) then 
-//	    doRakeBreak(); return true;
-//	    if (breakButtonPressed == false && onBreak == true) then 
-//	    doReturnToWork();  return true;
-
-	    /*Part 3 (Non-)Normative*/
-	    if (breakButtonPressed == true) { 
-	    	if (allowBreak == willHostAllowBreak.pending) { 
-//	    		host.mayITakeBreak(this);
-	    		return true;
-	    	}
-		    if (allowBreak == willHostAllowBreak.no) {
-		    	doReturnToWork();  
-		    	return true;
-		    }
-		    if (allowBreak == willHostAllowBreak.yes && customers.isEmpty()) { 
-		    	doTakeBreak(); 
-		    	return true;
-		    }
-		    if (breakButtonPressed == false && onBreak == true) { 
-		    	doReturnToWork();  
-		    	return true;
-		    }
-	    }
-	    
-	    
 	}
+	
+//    /*Part 3 (Non-)Normative*/
+//    if (breakButtonPressed == true) then 
+//    	if (willHostAllowBreak == pending) then
+//    		host.mayITakeBreak(this);
+//    if (willHostAllowBreak == no) then 
+//    doReturnToWork();  return true;
+//    if (willHostAllowBreak == yes && ~$ c in customers) then 
+//    doRakeBreak(); return true;
+//    if (breakButtonPressed == false && onBreak == true) then 
+//    doReturnToWork();  return true;
+
+    /*Part 3 (Non-)Normative*/
+    if (breakButtonPressed == true && onBreak == false) {
+    	if (allowBreak == willHostAllowBreak.pending) { // GUI button pressed, start the action cycle
+    		doMessageHost();
+    		return true;
+    	}
+	    if (allowBreak == willHostAllowBreak.no) { // Host response == no.  Return to work
+	    	doReturnToWork();  
+	    	return true;
+	    }
+	    if (allowBreak == willHostAllowBreak.yes && customers.isEmpty()) {  // Allow waiter to take break once all customers are gone
+	    	doTakeBreak(); 
+	    	return true;
+	    }
+    }
+    if (breakButtonPressed == false && (onBreak == true || allowBreak != willHostAllowBreak.na)) { 
+    	// Set the waiter to off break state or 
+    	// GUI button pressed right after it was just recently pressed -- reset waiter break state to before it was pressed  
+    	doReturnToWork();  
+    	return true;
+    } 
+	
 	if (!currentPosition.equals(originalPosition)) {
 	    DoMoveToOriginalPosition();//Animation thing
 	    return true;
@@ -400,17 +409,25 @@ public class WaiterAgent extends Agent {
     
     /*Part 3 (Non-)Normative*/
     private void doTakeBreak() {
+    	print("I am taking my break, all customers are gone.");
     	onBreak = true;
     	// Make sure to send message about turning on GUI button
     	stateChanged();
     }
 
     private void doReturnToWork() {
+    	print("I am returning to work.");
     	onBreak = false;
 	    // Make sure to send message about off on GUI button
 	    breakButtonPressed = false;
 	    allowBreak = willHostAllowBreak.na;
 	    stateChanged();
+    }
+    
+    private void doMessageHost() {
+    	print("Asking host if I can take a break.");
+    	host.msgMayITakeABreak(this);
+		allowBreak = willHostAllowBreak.waiting;
     }
 
     

@@ -700,7 +700,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 				
 				if (e.getSource() == stateCB) {
 					// Send message to waiter in an attempt to start the break cycle
-//					temp.msgGuiButtonPressed(); // Uncomment when ready to begin testing
+					temp.msgGuiButtonPressed(); 
 					System.out.println("Set the waiter's break button");
 				}
 				
