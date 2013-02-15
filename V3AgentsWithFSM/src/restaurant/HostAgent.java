@@ -148,7 +148,7 @@ public class HostAgent extends Agent {
     /** Scheduler.  Determine what action is called for, and do it. */
     protected boolean pickAndExecuteAnAction() {
 	
-   	print(Integer.toString(waitList.size()));
+   	//print(Integer.toString(waitList.size()));
 
     	
 	if(!waitList.isEmpty() && !waiters.isEmpty()){
