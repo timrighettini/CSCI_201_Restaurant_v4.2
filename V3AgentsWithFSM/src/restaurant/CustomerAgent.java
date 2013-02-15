@@ -39,16 +39,19 @@ public class CustomerAgent extends Agent {
     private CashierAgent cashier; // The customer pays this agent before leaving with “wallet” – see below 
 
     private Bill bill; // Will be given from the waiter and passed to the cashier
-    private volatile double wallet = 16.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00, but can be changed in the GUI
+    private volatile double wallet = 25.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00, but can be changed in the GUI
     private volatile double amountOwed = 0.00; // How much money the customer owes the restaurant (will be thread safe)
     
     private Map<String, Boolean> orderState = new HashMap<String, Boolean>();
 
     /*Part 4.1 Non-Normative*/
     // These values all deal with the tables full non normative scenario
-    private boolean willingToWait = false; // Will be set-able with GUI
+    private boolean willingToWait = true; // Will be set-able with GUI
     private int waitListSize = 0; // Size of the waitlist
-    private int LOW_WAITLIST = 3; // Number used to determine if the customer will wait in line or not 
+    private int LOW_WAITLIST = 3; // Number used to determine if the customer will wait in line or not
+    
+    private boolean restaurantFull = false; // This values will be used to determine if the restaurant is full or not
+    private boolean messaged = false; // Will determine if the customerAgent has been messsaged about the restaurant being full
 
     /*Part 4.2 Non-Normative*/
     private boolean willOnlyPayFully = true;  // Will be set-able in the GUI or in some other fashion
@@ -353,7 +356,9 @@ public class CustomerAgent extends Agent {
     private void leaveRestaurant() {
 	print("Leaving the restaurant");
 	guiCustomer.leave(); //for the animation
-	waiter.msgDoneEatingAndLeaving(this);
+	if (waiter != null) {
+		waiter.msgDoneEatingAndLeaving(this);
+	}
 	isHungry = false;
 	stateChanged();
 	gui.setCustomerEnabled(this); //Message to gui to enable hunger button
@@ -373,15 +378,18 @@ public class CustomerAgent extends Agent {
 
 	//-----//
 	private void doWaitResponse() {
-		if (willingToWait == true || waitListSize < LOW_WAITLIST) {
-//			host.msgThankYouIllWait(this);
+		if (willingToWait == true) {
+			print(host.getName() + ", thank you.  I will wait.");
+			host.msgThankYouIllWait(this);
 			state = AgentState.WaitingInRestaurant;
+			stateChanged();
 		}
 		else {
-//			host.msgSorryIHaveToLeave(this);
+			print(host.getName() + ", sorry, but I cannot wait.  I will have to leave.");
+			host.msgSorryIHaveToLeave(this);
+			leaveRestaurant();
 			state = AgentState.DoingNothing;
 		}
-		stateChanged();
 	}
 
 	private double subtractFromWallet (double num) { // Will return how much was subtracted from wallet
@@ -503,6 +511,22 @@ public class CustomerAgent extends Agent {
         		orderState.put(str, true);        		
         	}
     	}    	
+    }
+    
+    public boolean getRestaurantFull() {
+    	return restaurantFull;
+    }
+    
+    public void setRestaurantFull(boolean b) {
+    	restaurantFull = b;
+    }
+    
+    public boolean getMessaged() {
+    	return messaged;
+    }
+    
+    public void setMessaged(boolean b) {
+    	messaged = b;
     }
     
 }

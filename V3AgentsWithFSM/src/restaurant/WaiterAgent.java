@@ -211,6 +211,40 @@ public class WaiterAgent extends Agent {
     protected boolean pickAndExecuteAnAction() {
 	//print("in waiter scheduler");
 
+//      /*Part 3 (Non-)Normative*/
+//      if (breakButtonPressed == true) then 
+//      	if (willHostAllowBreak == pending) then
+//      		host.mayITakeBreak(this);
+//      if (willHostAllowBreak == no) then 
+//      doReturnToWork();  return true;
+//      if (willHostAllowBreak == yes && ~$ c in customers) then 
+//      doRakeBreak(); return true;
+//      if (breakButtonPressed == false && onBreak == true) then 
+//      doReturnToWork();  return true;
+
+    /*Part 3 (Non-)Normative*/
+    if (breakButtonPressed == true && onBreak == false) {
+      	if (allowBreak == willHostAllowBreak.pending) { // GUI button pressed, start the action cycle
+      		doMessageHost();
+      		return true;
+      	}
+  	    if (allowBreak == willHostAllowBreak.no) { // Host response == no.  Return to work
+  	    	doReturnToWork();  
+  	    	return true;
+  	    }
+  	    if (allowBreak == willHostAllowBreak.yes && customers.isEmpty()) {  // Allow waiter to take break once all customers are gone
+  	    	doTakeBreak(); 
+  	    	return true;
+  	    }
+    }
+    if (breakButtonPressed == false && (onBreak == true || allowBreak != willHostAllowBreak.na)) { 
+      	// Set the waiter to off break state or 
+      	// GUI button pressed right after it was just recently pressed -- reset waiter break state to before it was pressed  
+      	doReturnToWork();  
+      	return true;
+    } 
+    	
+    	
 	//Runs through the customers for each rule, so 
 	//the waiter doesn't serve only one customer at a time
 	if(!customers.isEmpty()){
@@ -271,39 +305,6 @@ public class WaiterAgent extends Agent {
 	    }	   
 	    
 	}
-	
-//    /*Part 3 (Non-)Normative*/
-//    if (breakButtonPressed == true) then 
-//    	if (willHostAllowBreak == pending) then
-//    		host.mayITakeBreak(this);
-//    if (willHostAllowBreak == no) then 
-//    doReturnToWork();  return true;
-//    if (willHostAllowBreak == yes && ~$ c in customers) then 
-//    doRakeBreak(); return true;
-//    if (breakButtonPressed == false && onBreak == true) then 
-//    doReturnToWork();  return true;
-
-    /*Part 3 (Non-)Normative*/
-    if (breakButtonPressed == true && onBreak == false) {
-    	if (allowBreak == willHostAllowBreak.pending) { // GUI button pressed, start the action cycle
-    		doMessageHost();
-    		return true;
-    	}
-	    if (allowBreak == willHostAllowBreak.no) { // Host response == no.  Return to work
-	    	doReturnToWork();  
-	    	return true;
-	    }
-	    if (allowBreak == willHostAllowBreak.yes && customers.isEmpty()) {  // Allow waiter to take break once all customers are gone
-	    	doTakeBreak(); 
-	    	return true;
-	    }
-    }
-    if (breakButtonPressed == false && (onBreak == true || allowBreak != willHostAllowBreak.na)) { 
-    	// Set the waiter to off break state or 
-    	// GUI button pressed right after it was just recently pressed -- reset waiter break state to before it was pressed  
-    	doReturnToWork();  
-    	return true;
-    } 
 	
 	if (!currentPosition.equals(originalPosition)) {
 	    DoMoveToOriginalPosition();//Animation thing
@@ -596,6 +597,10 @@ public class WaiterAgent extends Agent {
 
     public void setCashier(CashierAgent cashier) { // Set the cashier
     	this.cashier = cashier;
+    }
+    
+    public boolean getOnBreak() { // return onBreak for the waiter
+    	return onBreak;
     }
     
 }
