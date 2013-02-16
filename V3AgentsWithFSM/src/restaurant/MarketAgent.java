@@ -57,7 +57,7 @@ public class MarketAgent extends Agent {
 	
 	// Other important variables
 	private String name; // Name of the market
-	int STARTING_NUM = 10; // This will hold how much of each item a market will start with.
+	int STARTING_NUM = 100; // This will hold how much of each item a market will start with.
 	DecimalFormat df = new DecimalFormat("######.##");
 	
 	private boolean randomizer = true; // If this value is true, then the market agent will randomize order time, else, the order time will be 5000 milliseconds.

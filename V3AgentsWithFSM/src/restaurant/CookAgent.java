@@ -241,7 +241,7 @@ public class CookAgent extends Agent {
     			orders.remove(order);  			
     		}
     	    else { // Wait to cook the order until it arrives
-    	    	print("Currently out of stock of:" + order.choice + " for " + order.tableNum + ", but shipment will arrive in " +  (timeForDelivery) + " milliseconds.");
+    	    	print("Currently out of stock of: " + order.choice + " for " + order.tableNum + ", but shipment will arrive in " +  (timeForDelivery) + " milliseconds.");
     	    	print("Will cook it when shipment arrives.");
     	    	order.waitingForShipment = true;
     	    }
@@ -265,9 +265,6 @@ public class CookAgent extends Agent {
     	// Make an order from the string
     	Map<String, Integer> items = new HashMap<String, Integer>();
     	int numOfItemsToOrder = inventory.get(item).MAX - inventory.get(item).amount;
-    	if (numOfItemsToOrder > 5) {
-    		numOfItemsToOrder = 5; // Makes even numbers of selling for the market
-    	}
     	items.put(item, numOfItemsToOrder); // Max out the order - amount
     	markets.get(nextMarket).msgNeedFoodDelivered(items);
     	
