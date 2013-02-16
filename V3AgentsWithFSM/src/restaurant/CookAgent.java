@@ -83,6 +83,7 @@ public class CookAgent extends Agent {
 	public String choice;
 	public Status status;
 	public Food food; //a gui variable
+	public boolean waitingForShipment = false; // This will be used keep an order on standby until a shipment arrives if it has already been ordered
 
 	/** Constructor for Order class 
 	 * @param waiter waiter that this order belongs to
@@ -121,8 +122,7 @@ public class CookAgent extends Agent {
     List<ETA> arrivalTimes = new ArrayList<ETA>(); // Receipts for deliveries with tracking information
 
     /*Part 2 Non-Normative*/
-    int REASONABLE_WAIT = 3000; // The cook will be willing to wait 3000 for an order to arrive, else he/she will tell the customer to change an order
-
+    int REASONABLE_WAIT = 8000; // The cook will be willing to wait 5000 milliseconds for an order to arrive, else he/she will tell the customer to change an order
     
     
     // *** MESSAGES ***
@@ -175,7 +175,7 @@ public class CookAgent extends Agent {
     	
 	//If there exists an order o whose status is done, place o.
 	for(Order o:orders){
-	    if(o.status == Status.done){
+	    if(o.status == Status.done && o.waitingForShipment == false){
 		placeOrder(o);
 		return true;
 	    }
@@ -218,11 +218,14 @@ public class CookAgent extends Agent {
      * @param order
      */
     private void cookOrder(Order order){
-    	if (inventory.get(order.choice).amount <= 0) {
+    	if (inventory.get(order.choice).amount <= 0 && order.waitingForShipment == false) {
     		boolean removeOrder = true; // flag to remove the order
+    		long timeForDelivery = 0;
     		for (ETA eta: arrivalTimes) {
     			if (eta.items.get(order.choice) != null) { // If an order for this item actually exists
-    				if ((System.currentTimeMillis() - eta.orderTime) > eta.deliveryTime - REASONABLE_WAIT) { 
+    				timeForDelivery = eta.deliveryTime + (eta.orderTime - System.currentTimeMillis());
+    				//print(eta.deliveryTime + " " + eta.orderTime + " " + System.currentTimeMillis()); // Debug for the algorithm
+    				if (timeForDelivery > REASONABLE_WAIT) { 
     					// If an item of this choice is is NOT coming soon (if time ordered - currentTime > deliveryTime - REASONABLE_WAIT)
     					removeOrder = true;
     				}
@@ -237,13 +240,14 @@ public class CookAgent extends Agent {
     			order.waiter.msgOutOfThisItem(order.choice, order.tableNum);
     			orders.remove(order);  			
     		}
-    	    else { // Continue as normal
-    	    	DoCooking(order);
-    	    	order.status = Status.cooking;
+    	    else { // Wait to cook the order until it arrives
+    	    	print("Currently out of stock of:" + order.choice + " for " + order.tableNum + ", but shipment will arrive in " +  (timeForDelivery) + " milliseconds.");
+    	    	print("Will cook it when shipment arrives.");
+    	    	order.waitingForShipment = true;
     	    }
     	}
     	
-	    else {
+	    else if (inventory.get(order.choice).amount > 0) { // Do not cook an order if there is NOT any of that item currently in the inventory 
 	    	DoCooking(order);
 	    	order.status = Status.cooking;
 	    }
@@ -260,7 +264,11 @@ public class CookAgent extends Agent {
       	print("Ordering " + item + " from market " + markets.get(nextMarket));
     	// Make an order from the string
     	Map<String, Integer> items = new HashMap<String, Integer>();
-    	items.put(item, inventory.get(item).MAX - inventory.get(item).amount); // Max out the order - amount
+    	int numOfItemsToOrder = inventory.get(item).MAX - inventory.get(item).amount;
+    	if (numOfItemsToOrder > 5) {
+    		numOfItemsToOrder = 5; // Makes even numbers of selling for the market
+    	}
+    	items.put(item, numOfItemsToOrder); // Max out the order - amount
     	markets.get(nextMarket).msgNeedFoodDelivered(items);
     	
     	itemOrdered.put(item, true);
@@ -280,6 +288,10 @@ public class CookAgent extends Agent {
 		for (String s: setKeys) {
 			inventory.get(s).amount += items.get(s); // Add the items from the order into the inventory
 			itemOrdered.put(s, false); // Set this ordered value to false so that the item can be ordered again if it runs out
+			// Check through orders arrayList and make all waitForShipment values to false so that the items can actually be cooked
+			for (Order o: orders) {
+				o.waitingForShipment = false;	
+			}
 		}   
     	
     	deliveries.remove(items);

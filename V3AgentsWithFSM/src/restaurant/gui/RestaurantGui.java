@@ -360,9 +360,8 @@ public class RestaurantGui extends JFrame implements ActionListener{
 	
 	else if(person instanceof MarketAgent){
 		MarketAgent market = (MarketAgent) person;
-	    stateCB.setText("Check Market Inventory Below");
-	    stateCB.setSelected(false);
-	    stateCB.setEnabled(false);
+	    stateCB.setText("Randomized Order Times");
+	    stateCB.setEnabled(true);
 	    infoLabel.setText(
 	    "<html><pre>     Name: " + market.getName() + " </html>");
 	    customerPanel.setVisible(false); // Set my panel to be NOT visible to the market
@@ -440,9 +439,8 @@ public class RestaurantGui extends JFrame implements ActionListener{
 		
 		else if(person instanceof MarketAgent){
 			MarketAgent market = (MarketAgent) person;
-		    stateCB.setText("Check Market Inventory Below");
-		    stateCB.setSelected(false);
-		    stateCB.setEnabled(false);
+		    stateCB.setText("Randomized Order Times");
+		    stateCB.setEnabled(true);
 		    infoLabel.setText(
 		    "<html><pre>     Name: " + market.getName() + " </html>");
 		    customerPanel.setVisible(false); // Set my panel to be NOT visible to the market
@@ -475,12 +473,11 @@ public class RestaurantGui extends JFrame implements ActionListener{
 		c.setHungry();
 		stateCB.setEnabled(false);
 		requestFocusInWindow();
+		System.out.println("Check Box Clicked!");
 
 	    }else if(currentPerson instanceof WaiterAgent){
 		WaiterAgent w = (WaiterAgent) currentPerson;
-		//w.setBreakStatus(stateCB.isSelected()); // Comment this out for now, integrate ASAP
-	    }
-		System.out.println("Check Box Clicked!");
+		}
 	}
 	else if (e.getSource() == addTable)
 	{
@@ -675,6 +672,16 @@ public class RestaurantGui extends JFrame implements ActionListener{
 					}
 				}
 				
+				if (e.getSource() == stateCB) { // Then change the market randomizer value
+					System.out.println("Set the market's randomizer value");
+					if (temp.getRandomizer() == true) {
+						temp.setRandomizer(false);
+					}
+					else {
+						temp.setRandomizer(true);
+					}					
+				}
+				
 				// DO polling updates here	
 			    // Set MarketAgent values
 				Map<String, Integer> tempInv = temp.getInventory();
@@ -692,6 +699,9 @@ public class RestaurantGui extends JFrame implements ActionListener{
 						cookTFs.get(t).setText(Integer.toString(value));
 					}
 				}
+				
+				// Set stateCB based upon what the randomizer value is
+				stateCB.setSelected(temp.getRandomizer());
 			}
 			
 			/***** Waiter Agent Code *****/

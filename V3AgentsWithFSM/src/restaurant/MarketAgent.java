@@ -60,6 +60,9 @@ public class MarketAgent extends Agent {
 	int STARTING_NUM = 10; // This will hold how much of each item a market will start with.
 	DecimalFormat df = new DecimalFormat("######.##");
 	
+	private boolean randomizer = true; // If this value is true, then the market agent will randomize order time, else, the order time will be 5000 milliseconds.
+	// This will help test the case where a food order for a certain item is about to arrive, according to the tracking time, and where the cook does not tell the customer to reorder.
+	
 	// Constructor
 	public MarketAgent(String name) {
 		super();
@@ -188,16 +191,24 @@ public class MarketAgent extends Agent {
 	}
 
 	private void doSendOrder(final Order o) { // Set up shipping
-	timer.schedule(new TimerTask() {
+		int randomTime = 0;
+		if (randomizer == true) { // Then make a random time
+			randomTime = timeForDelivery * (rand.nextInt(9) + 1); // Will hold a random number, depending on what randomizer is set to
+		}
+		else { // Then make a NOT random time
+			randomTime = timeForDelivery * 2; // Will hold a NOT random number, depending on what randomizer is set to
+		}
+		
+		timer.schedule(new TimerTask() {
 		public void run() {
 			print("Delivering food order: " + o.id + " " +  o.items);
 			o.state = orderState.delivered;
 			stateChanged();
 		}
-	}, timeForDelivery * (rand.nextInt(9) + 1)); // Will make the time anywhere 
+	}, randomTime); // Will make the time anywhere from 4000 to 40000 ms wait
 		o.state = orderState.shipped;
-		print("Shipped food order: " + o.id + " " +  o.items + ".  Estimated time for delivery (in milliseconds): " + (timeForDelivery * (rand.nextInt(9) + 1)));
-		cook.msgHereIsYourTrackingInformation(System.currentTimeMillis(), timeForDelivery, o.items);
+		print("Shipped food order: " + o.id + " " +  o.items + ".  Estimated time for delivery (in milliseconds): " + randomTime);
+		cook.msgHereIsYourTrackingInformation(System.currentTimeMillis(), randomTime, o.items);
 	}
 
 	private void deliverFoodOrder(Order o) {  // Deliver the order to the cook
@@ -257,5 +268,13 @@ public class MarketAgent extends Agent {
 	
 	public void setInventory(Map<String, Integer> items) { // Second manner in which to change the inventory
 		inventory = items;		
+	}
+	
+	public boolean getRandomizer() {
+		return randomizer;
+	}
+	
+	public void setRandomizer(boolean b) {
+		randomizer = b;
 	}
 }
