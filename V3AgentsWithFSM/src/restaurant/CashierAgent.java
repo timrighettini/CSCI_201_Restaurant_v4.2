@@ -1,12 +1,12 @@
 package restaurant;
 
+import restaurant.interfaces.*;
 import agent.Agent;
-
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.*;
 
-public class CashierAgent extends Agent {
+public class CashierAgent extends Agent implements Cashier{
 	//Name: CashierAgent
 	//Description:  Customer pays this agent for his/her food before notifying the waiter & leaving
 
@@ -66,17 +66,6 @@ public class CashierAgent extends Agent {
 		stateChanged();
 	}
 
-//	Scheduler:
-	/*Pseudocode*/
-//	if ($ cp in customerPayments) then /*Part 1 Normative*/
-//	if ($ bill in billsToPay s.t. bill.Agent == cp.cBill.Agent) then
-//		checkCustomerPayment(cp, bill);
-//		return true;
-//	if ($ b in marketBills) then /*Part 2 Normative*/
-//		payMarketBill(b);
-//		return true;
-//	return false
-	
 	protected boolean pickAndExecuteAnAction() {
 		for (PayCustomer cp: customerPayments) { /*Part 1 Normative*/
 			for (Bill b: billsToPay) { // If a bill has been given to the cashier from the waiter, check to see if there is a matching customer payment

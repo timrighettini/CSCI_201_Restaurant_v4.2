@@ -1,5 +1,7 @@
 package restaurant;
 
+import restaurant.interfaces.*;
+
 import agent.Agent;
 import java.util.*;
 
@@ -10,7 +12,7 @@ import java.util.*;
  *  keeps a list of waiting customers.
  *  Interacts with customers and waiters.
  */
-public class HostAgent extends Agent {
+public class HostAgent extends Agent implements Host {
 
     /** Private class storing all the information for each table,
      * including table number and state. */
@@ -34,8 +36,8 @@ public class HostAgent extends Agent {
 	/** Constructor for MyWaiter class
 	 * @param waiter
 	 */
-	public MyWaiter(WaiterAgent waiter){
-	    wtr = waiter;
+	public MyWaiter(Waiter waiter){
+	    wtr = (WaiterAgent) waiter;
 	}
     }
 
@@ -65,8 +67,8 @@ public class HostAgent extends Agent {
     	customerState willWait = customerState.pending; // Initialized to this state
     	boolean messaged; // This will determine if this customer has been messaged by the host or not
     	
-    	public PotentialCustomer(CustomerAgent c) {
-    		this.cmr = c;
+    	public PotentialCustomer(Customer c) {
+    		this.cmr = (CustomerAgent) c;
     		this.messaged = false;
     	}
     }
@@ -90,7 +92,7 @@ public class HostAgent extends Agent {
 
     /** Customer sends this message to be added to the wait list 
      * @param customer customer that wants to be added */
-    public void msgIWantToEat(CustomerAgent customer){
+    public void msgIWantToEat(Customer customer){
     	boolean tableFree = false; // If there are NO free tables, then this variable will NOT be changed in the following loop
     	int tablesOccupied = 0; // Will keep track of how many tables are occupied, and how many seats are left
     	for (int i = 0; i < tables.length; i++) {
@@ -101,11 +103,11 @@ public class HostAgent extends Agent {
     		}
     	}
     	if (tableFree == true && waitList.size() <= 4 - tablesOccupied) { // Add customer to waitlist, as seen regularly
-    		waitList.add(customer);
+    		waitList.add((CustomerAgent) customer);
     	}
     	else { // Add this customer to a potential customer list, and ask if she/he wants to wait
-    		customer.setRestaurantFull(true); // Will be used to begin restaurant full non-normative scenario
-    		waitList.add(customer);
+    		((CustomerAgent) customer).setRestaurantFull(true); // Will be used to begin restaurant full non-normative scenario
+    		waitList.add((CustomerAgent) customer);
     		
     	}
 		stateChanged();
@@ -119,14 +121,14 @@ public class HostAgent extends Agent {
     }
     
     /*Part 3 (Non-)Normative*/
-    public void msgMayITakeABreak(WaiterAgent waiter) {
+    public void msgMayITakeABreak(Waiter waiter) {
     	print("I got your message to break: " + waiter.getName());
-    	waitersWhoWantToBreak.add(waiter);
+    	waitersWhoWantToBreak.add((WaiterAgent) waiter);
     	stateChanged();
     }
 
     /*Part 4 Non-Normative*/
-    public void  msgThankYouIllWait(CustomerAgent c) {
+    public void  msgThankYouIllWait(Customer c) {
     	for (PotentialCustomer t: tablesFullCustomers) {
     		if (t.cmr.getName().equals(c.getName())) {
     			t.willWait = customerState.yes;
@@ -135,7 +137,7 @@ public class HostAgent extends Agent {
     	}
     }
 
-    public void msgSorryIHaveToLeave(CustomerAgent c) {
+    public void msgSorryIHaveToLeave(Customer c) {
     	for (PotentialCustomer t: tablesFullCustomers) {
     		if (t.cmr.getName().equals(c.getName())) {
     			t.willWait = customerState.no;
@@ -148,9 +150,6 @@ public class HostAgent extends Agent {
     /** Scheduler.  Determine what action is called for, and do it. */
     protected boolean pickAndExecuteAnAction() {
 	
-   	//print(Integer.toString(waitList.size()));
-
-    	
 	if(!waitList.isEmpty() && !waiters.isEmpty()){
 	    synchronized(waiters){
 		//Finds the next waiter that is working
@@ -174,30 +173,12 @@ public class HostAgent extends Agent {
 	}
 	
     /*Part 4 Non-Normative*/
-//    if ($ t in tablesFullCustomers) then
-//    	if (t.willWait == pending) then 
-//    		doSendCustomerWaitingMessage(c.cmr);
-//    return true;
-//    	else
-//    		doAddCustomerToWaitList(c);
-//    		return true;
-//
-//    if ($ w in waitersWhoWantToBreak) then /*Part 3 (Non-)Normative*/
-//    	if (restaurant ~busy) then 
-//    		// determining “busy” will be done in implementation
-//    		doMessageWaiterBreak(w, true);
-//    return true;
-//    	else 
-//    		doMessageWaiterBreak(w, false);
-//    		return true;
-//    	return true;
-
     // Check to see if any non-waitlist customers are in need of service 
-    for (CustomerAgent t: waitList) {    	
-	    	if (t.getRestaurantFull() == true) {
-		    	if (t.getMessaged() == false) {
+    for (Customer t: waitList) {    	
+	    	if (((CustomerAgent) t).getRestaurantFull() == true) {
+		    	if (((CustomerAgent) t).getMessaged() == false) {
 		    		doSendCustomerWaitingMessage(t); // Send cmr a message to see if he/she wants to wait
-		    		t.setMessaged(true);
+		    		((CustomerAgent) t).setMessaged(true);
 		    		return true;
 		    	}
 		    	else {
@@ -209,7 +190,7 @@ public class HostAgent extends Agent {
     }
     
     // Check to see if any waiters would like to go on break
-    for (WaiterAgent w: waitersWhoWantToBreak) {
+    for (Waiter w: waitersWhoWantToBreak) {
 		doMessageWaiterBreak(w, !checkRestaurantBusy());
 		break;
     }
@@ -227,7 +208,7 @@ public class HostAgent extends Agent {
      * @param waiter
      * @param customer
      * @param tableNum */
-    private void tellWaiterToSitCustomerAtTable(MyWaiter waiter, CustomerAgent customer, int tableNum){
+    private void tellWaiterToSitCustomerAtTable(MyWaiter waiter, Customer customer, int tableNum){
 	print("Telling " + waiter.wtr + " to sit " + customer +" at table "+(tableNum+1));
 	waiter.wtr.msgSitCustomerAtTable(customer, tableNum);
 	tables[tableNum].occupied = true;
@@ -237,7 +218,7 @@ public class HostAgent extends Agent {
     }
 	
     /*Part 3 (Non-)Normative*/
-    private void doMessageWaiterBreak(WaiterAgent w, boolean b) {
+    private void doMessageWaiterBreak(Waiter w, boolean b) {
 	    if (b == true) { 
 	    	print(w.getName() + ", you may take a break when all of your customers leave.");
 	    	w.msgYesAfterYourCustomersFinish();
@@ -251,17 +232,17 @@ public class HostAgent extends Agent {
     }
 
     /*Part 4 Non-Normative*/
-    private void doSendCustomerWaitingMessage(CustomerAgent c) {
+    private void doSendCustomerWaitingMessage(Customer c) {
     	print(c.getName() + ", sorry, but all of the tables are full.  Would you like to wait?");
     	c.msgSorryTablesAreOccupied(waitList.size());
     	stateChanged();
     }
 
-    private void doAddCustomerToWaitList(CustomerAgent c) {
+    private void doAddCustomerToWaitList(Customer c) {
     	// Set the appropriate values to false
-    	c.setRestaurantFull(false);
-    	c.setMessaged(false);    	
-    	if (c.getWillingToWait() == false) { // Remove the customer from the wait list if he/she wants to leave
+    	((CustomerAgent) c).setRestaurantFull(false);
+    	((CustomerAgent) c).setMessaged(false);    	
+    	if (((CustomerAgent) c).getWillingToWait() == false) { // Remove the customer from the wait list if he/she wants to leave
     		waitList.remove(c);
     	}    	
     	stateChanged();
@@ -288,7 +269,7 @@ public class HostAgent extends Agent {
     /** Hack to enable the host to know of all possible waiters 
      * @param waiter new waiter to be added to list
      */
-    public void setWaiter(WaiterAgent waiter){
+    public void setWaiter(Waiter waiter){
 	waiters.add(new MyWaiter(waiter));
 	stateChanged();
     }

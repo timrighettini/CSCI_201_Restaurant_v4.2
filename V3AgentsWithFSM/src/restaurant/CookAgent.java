@@ -1,5 +1,6 @@
 package restaurant;
 
+import restaurant.interfaces.*;
 import agent.Agent;
 import java.util.*;
 
@@ -12,7 +13,7 @@ import java.awt.Color;
  *  and simulates cooking them.
  *  Interacts with waiters only.
  */
-public class CookAgent extends Agent {
+public class CookAgent extends Agent implements Cook {
 
     //List of all the orders
     private List<Order> orders = new ArrayList<Order>();
@@ -90,8 +91,8 @@ public class CookAgent extends Agent {
 	 * @param tableNum identification number for the table
 	 * @param choice type of food to be cooked 
 	 */
-	public Order(WaiterAgent waiter, int tableNum, String choice){
-	    this.waiter = waiter;
+	public Order(Waiter waiter, int tableNum, String choice){
+	    this.waiter = (WaiterAgent) waiter;
 	    this.choice = choice;
 	    this.tableNum = tableNum;
 	    this.status = Status.pending;
@@ -132,7 +133,7 @@ public class CookAgent extends Agent {
      * @param tableNum identification number for the table
      * @param choice type of food to be cooked
      */
-    public void msgHereIsAnOrder(WaiterAgent waiter, int tableNum, String choice){
+    public void msgHereIsAnOrder(Waiter waiter, int tableNum, String choice){
 	orders.add(new Order(waiter, tableNum, choice));
 	stateChanged();
     }
@@ -165,9 +166,6 @@ public class CookAgent extends Agent {
     protected boolean pickAndExecuteAnAction() {
 	
 //   /*Part 2 Normative*/
-//   if ($ d in deliveries) then
-//   	addFoodToInventory(d); return true;
-
     for (Map<String, Integer> d: deliveries) { // If there is a delivery, get the items from it
     	addFoodToInventory(d);
     	return true;
@@ -189,11 +187,6 @@ public class CookAgent extends Agent {
 	}
 	
 //	/*Part 2 Normative*/
-//	if (V choice s.t. inventory.get(choice).amounts < threshold) then
-//		orderFromMarket(new Map<V choice, int num>);
-//		// Implementation detail = getting V choice and num
-//		return true;
-
 	// Get the keys of the inventory and turn it into an array	
 	Set<String> keys = inventory.keySet(); // Iterate through the map
 	for (String k: keys) {
@@ -341,11 +334,11 @@ public class CookAgent extends Agent {
 		} // Since this class will be declared INSIDE CookAgent, the data from CookAgent is accessible from this class
 	}
 	
-	public void addMarket(MarketAgent m) { // Will add a market to the cook's set of markets
-		markets.add(m);
+	public void addMarket(Market m) { // Will add a market to the cook's set of markets
+		markets.add((MarketAgent) m);
 	}
 	
-	public void removeMarket(MarketAgent m) { // Will remove a market from the markets array
+	public void removeMarket(Market m) { // Will remove a market from the markets array
 		markets.remove(m);
 	}
 

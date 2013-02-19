@@ -1,5 +1,7 @@
 package restaurant;
 
+import restaurant.interfaces.*;
+
 import agent.Agent;
 
 import java.math.RoundingMode;
@@ -9,7 +11,7 @@ import java.util.*;
 import restaurant.layoutGUI.*;
 import java.awt.Color;
 
-public class MarketAgent extends Agent {
+public class MarketAgent extends Agent implements Market {
 	//Name: MarketAgent
 	//Description:  This agent will deliver food to the cook, accepting payments from the cashier
 
@@ -250,12 +252,12 @@ public class MarketAgent extends Agent {
 	}
 	
 	// Create setCook and setCashier methods
-	public void setCook(CookAgent cook) {
-		this.cook = cook;
+	public void setCook(Cook cook) {
+		this.cook = (CookAgent) cook;
 	}
 	
-	public void setCashier(CashierAgent cashier) {
-		this.cashier = cashier;
+	public void setCashier(Cashier cashier) {
+		this.cashier = (CashierAgent) cashier;
 	}	
 	
 	public void setInventory(String c, int num) {

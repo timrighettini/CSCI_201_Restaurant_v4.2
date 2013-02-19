@@ -1,5 +1,6 @@
 package restaurant;
 
+import restaurant.interfaces.*;
 import restaurant.gui.RestaurantGui;
 import restaurant.layoutGUI.*;
 import agent.Agent;
@@ -13,7 +14,7 @@ import java.awt.Color;
  * Randomly chooses a menu item and simulates eating 
  * when the food arrives. 
  * Interacts with a waiter only */
-public class CustomerAgent extends Agent {
+public class CustomerAgent extends Agent implements Customer {
     private String name;
     private int hungerLevel = 5;  // Determines length of meal
     private RestaurantGui gui;
@@ -100,9 +101,9 @@ public class CustomerAgent extends Agent {
     /** Waiter sends this message so the customer knows to sit down 
      * @param waiter the waiter that sent the message
      * @param menu a reference to a menu */
-    public void msgFollowMeToTable(WaiterAgent waiter, Menu menu) {
+    public void msgFollowMeToTable(Waiter waiter, Menu menu) {
 	this.menu = menu;
-	this.waiter = waiter;
+	this.waiter = (WaiterAgent) waiter;
 	print("Received msgFollowMeToTable from" + waiter);
 	events.add(AgentEvent.beingSeated);
 	stateChanged();
@@ -179,11 +180,6 @@ public class CustomerAgent extends Agent {
 	}
 	
 //	/*Part 4 Non-Normative*/
-//	if ($ state s.t. state == AgentState.WaitingTablesAreFull) then
-//		if (event == AgentEvent.tablesAreFull) then
-//			doWaitResponse();
-//			return true;
-//
 	
 	if (state == AgentState.WaitingTablesAreFull) {
 	    if (event == AgentEvent.tablesAreFull)	{
@@ -232,17 +228,6 @@ public class CustomerAgent extends Agent {
 	
 //	/*New to v4.1*/
 //	/*Part 1 Normative*/
-//	if ($ state s.t. state == AgentState.Eating) then
-//		if (event == AgentEvent.doneEating) then
-//			payBill(); // Action
-//			state = AgentState.Paying; // Change to appropriate state
-//			return true;
-//
-//	if ($ state s.t. state == AgentState.Paying) then
-//		if (event == AgentEvent.donePaying) then
-//			leaveRestaurant(); // Action
-//			state = AgentState.DoingNothing; // Change to appropriate state
-//			return true;
 
 	///*
 	if (state == AgentState.Eating) {
@@ -415,8 +400,8 @@ public class CustomerAgent extends Agent {
 
     /** establish connection to host agent. 
      * @param host reference to the host */
-    public void setHost(HostAgent host) {
-		this.host = host;
+    public void setHost(Host host) {
+		this.host = (HostAgent) host;
     }
     
     /** Returns the customer's name
@@ -485,8 +470,8 @@ public class CustomerAgent extends Agent {
     	willOnlyPayFully = b;
     }
     
-    public void setCashier(CashierAgent c) {
-    	this.cashier = c;
+    public void setCashier(Cashier c) {
+    	this.cashier = (CashierAgent) c;
     }
     
     public boolean getOrderState(String s) {

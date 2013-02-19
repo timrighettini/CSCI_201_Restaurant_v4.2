@@ -1,4 +1,7 @@
 package restaurant;
+
+import restaurant.interfaces.*;
+
 import java.awt.Color;
 import restaurant.gui.RestaurantGui;
 import restaurant.layoutGUI.*;
@@ -13,7 +16,7 @@ import java.util.*;
  * Takes the orders to the cook and then returns them 
  * when the food is done.  Cleans up the tables after the customers leave.
  * Interacts with customers, host, and cook */
-public class WaiterAgent extends Agent {
+public class WaiterAgent extends Agent implements Waiter {
 
    //State variables for Waiter
     private boolean onBreak = false;
@@ -38,8 +41,8 @@ public class WaiterAgent extends Agent {
 	/** Constructor for MyCustomer class.
 	 * @param cmr reference to customer
 	 * @param num assigned table number */
-	public MyCustomer(CustomerAgent cmr, int num){
-	    this.cmr = cmr;
+	public MyCustomer(Customer cmr, int num){
+	    this.cmr = (CustomerAgent) cmr;
 	    tableNum = num;
 	    state = CustomerState.NO_ACTION;
 	}
@@ -99,7 +102,7 @@ public class WaiterAgent extends Agent {
     /** Host sends this to give the waiter a new customer.
      * @param customer customer who needs seated.
      * @param tableNum identification number for table */
-    public void msgSitCustomerAtTable(CustomerAgent customer, int tableNum){
+    public void msgSitCustomerAtTable(Customer customer, int tableNum){
 	MyCustomer c = new MyCustomer(customer, tableNum);
 	c.state = CustomerState.NEED_SEATED;
 	customers.add(c);
@@ -109,7 +112,7 @@ public class WaiterAgent extends Agent {
     /** Customer sends this when they are ready.
      * @param customer customer who is ready to order.
      */
-    public void msgImReadyToOrder(CustomerAgent customer){
+    public void msgImReadyToOrder(Customer customer){
 	//print("received msgImReadyToOrder from:"+customer);
 	for(int i=0; i < customers.size(); i++){
 	    //if(customers.get(i).cmr.equals(customer)){
@@ -125,7 +128,7 @@ public class WaiterAgent extends Agent {
     /** Customer sends this when they have decided what they want to eat 
      * @param customer customer who has decided their choice
      * @param choice the food item that the customer chose */
-    public void msgHereIsMyChoice(CustomerAgent customer, String choice){
+    public void msgHereIsMyChoice(Customer customer, String choice){
 	for(MyCustomer c:customers){
 	    if(c.cmr.equals(customer)){
 		c.choice = choice;
@@ -152,7 +155,7 @@ public class WaiterAgent extends Agent {
 
     /** Customer sends this when they are done eating.
      * @param customer customer who is leaving the restaurant. */
-    public void msgDoneEatingAndLeaving(CustomerAgent customer){
+    public void msgDoneEatingAndLeaving(Customer customer){
 	for(MyCustomer c:customers){
 	    if(c.cmr.equals(customer)){
 		c.state = CustomerState.IS_DONE;
@@ -581,13 +584,13 @@ public class WaiterAgent extends Agent {
     }
     
     /** Hack to set the cook for the waiter */
-    public void setCook(CookAgent cook){
-	this.cook = cook;
+    public void setCook(Cook cook){
+	this.cook = (CookAgent) cook;
     }
     
     /** Hack to set the host for the waiter */
-    public void setHost(HostAgent host){
-	this.host = host;
+    public void setHost(Host host){
+	this.host = (HostAgent) host;
     }
 
     /** @return true if the waiter is on break, false otherwise */
@@ -595,8 +598,8 @@ public class WaiterAgent extends Agent {
     	return onBreak;
     }
 
-    public void setCashier(CashierAgent cashier) { // Set the cashier
-    	this.cashier = cashier;
+    public void setCashier(Cashier cashier) { // Set the cashier
+    	this.cashier = (CashierAgent) cashier;
     }
     
     public boolean getOnBreak() { // return onBreak for the waiter
