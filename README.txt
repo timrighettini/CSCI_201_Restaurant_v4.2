@@ -92,6 +92,7 @@ This is similar to how Non-Normative Scenario #3 works.
 2.  Make sure the “Pay Fully” checkbox is checked, or else the customer will choose other items and go into debt.
 3.  Click “Hungry?,” and then the restaurant simulation will take everything from there.
 ** Make sure that the customer can actually order a Salad from the “Choose what the customer orders:” panel.
+
 Non-Normative Scenario #5: Customer orders, eats, but hasn't enough money to pay.
 How to run:
 This is similar to how Non-Normative Scenario #4 works.
