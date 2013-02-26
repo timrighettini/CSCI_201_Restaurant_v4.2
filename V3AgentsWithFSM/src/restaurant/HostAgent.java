@@ -249,7 +249,19 @@ public class HostAgent extends Agent implements Host {
     }
     
     private boolean checkRestaurantBusy() { // Will check to see if the restaurant is busy
-    	if ((waitList.size() == 0)) { // If there are no customers to service, return false -- more complicated conditions will be added later
+    	// Check to see if all waiters are on break
+    	int numWaitersOnBreak = 0;
+    	
+    	for (int i = 0; i < waiters.size(); i++) {
+    		if (waiters.get(i).wtr.isOnBreak() == true) {
+    			numWaitersOnBreak++;
+    		}
+    	}
+    	
+    	print("Waiters on Break: " + numWaitersOnBreak);
+    	
+    	if ((waitList.size() == 0) && (numWaitersOnBreak < waiters.size() - 1)) { 
+    		// If there are no customers to service, or if all of the waiters - 1 are NOT on break, return false 
     		return false;
     	}
     	else {
