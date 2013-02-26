@@ -6,6 +6,8 @@ import java.awt.Color;
 import restaurant.gui.RestaurantGui;
 import restaurant.layoutGUI.*;
 import agent.Agent;
+
+import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 import astar.*;
@@ -53,7 +55,7 @@ public class WaiterAgent extends Agent implements Waiter {
     protected String name;
 
     //All the customers that this waiter is serving
-    protected List<MyCustomer> customers = new ArrayList<MyCustomer>();
+    protected List<MyCustomer> customers = Collections.synchronizedList(new ArrayList<MyCustomer>());
 
     protected HostAgent host;
     protected CookAgent cook;
@@ -70,7 +72,7 @@ public class WaiterAgent extends Agent implements Waiter {
     CashierAgent cashier;
 
     /*Part 2 Non-Normative*/
-    List<Integer> customerToChangeOrder = new ArrayList<Integer>(); // Holds tablenum of customer of change order
+    List<Integer> customerToChangeOrder = Collections.synchronizedList(new ArrayList<Integer>()); // Holds tablenum of customer of change order
 
     /*Part 3 (Non-)Normative*/
     private boolean breakButtonPressed = false; // Set this to false to start, or else everything gets blow up

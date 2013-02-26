@@ -22,8 +22,8 @@ public class CashierAgent extends Agent implements Cashier{
 		}
 	}
 
-	private List <Bill> billsToPay = new ArrayList<Bill>(); // List of bills received from waiters
-	private List<PayCustomer> customerPayments = new ArrayList<PayCustomer>(); // List of customer submitted payments
+	private List <Bill> billsToPay = Collections.synchronizedList(new ArrayList<Bill>()); // List of bills received from waiters
+	private List<PayCustomer> customerPayments = Collections.synchronizedList(new ArrayList<PayCustomer>()); // List of customer submitted payments
 	private Map <String, Double> foodPrices = new HashMap<String, Double>(); // This will be used to help create bills in billsToPay, since the waiter will not pass an actual bill as an argument to the cashier in “msgHereIsCustomerOrder()”
 	private volatile double totalMoney = 0.00; // The total cash that the restaurant currently has in stock.  It will be added to when bills are processed and subtracted from when paying to buy food orders.
 	DecimalFormat df = new DecimalFormat("######.##");
@@ -46,7 +46,7 @@ public class CashierAgent extends Agent implements Cashier{
 	}
 
 	/*Part 2 Normative*/
-	List<Bill> marketBills = new ArrayList<Bill>(); // Bills that come from markets – market agent is given as a reference in the bill itself
+	List<Bill> marketBills = Collections.synchronizedList(new ArrayList<Bill>()); // Bills that come from markets – market agent is given as a reference in the bill itself
 
 	//Messages:
 	/*Part 1 Normative*/

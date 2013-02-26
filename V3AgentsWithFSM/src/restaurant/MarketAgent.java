@@ -43,8 +43,8 @@ public class MarketAgent extends Agent implements Market {
 	private CookAgent cook; 
 	private CashierAgent cashier;
 
-	private List<Order> orders = new ArrayList<Order>(); // List of all the cook’s orders
-	private List<Payment> cashierPayments = new ArrayList<Payment>(); // Payments from the cashier.  bill.choice will the id of an order instead of the item choice itself
+	private List<Order> orders = Collections.synchronizedList(new ArrayList<Order>()); // List of all the cook’s orders
+	private List<Payment> cashierPayments = Collections.synchronizedList(new ArrayList<Payment>()); // Payments from the cashier.  bill.choice will the id of an order instead of the item choice itself
 
 	private volatile double totalMoney = 0.00; // Money that the market has, this value may not be implemented unless it is needed in v4.2
 	private int timeForDelivery = 4000; // Shipping time used to estimate arrival times in milliseconds

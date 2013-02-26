@@ -16,7 +16,7 @@ import java.awt.Color;
 public class CookAgent extends Agent implements Cook {
 
     //List of all the orders
-    private List<CookOrder> orders = new ArrayList<CookOrder>();
+    private List<CookOrder> orders = Collections.synchronizedList(new ArrayList<CookOrder>());
     private Map<String,FoodData> inventory = new HashMap<String,FoodData>();
     public enum Status {pending, cooking, done}; // order status
 
@@ -119,10 +119,10 @@ public class CookAgent extends Agent implements Cook {
     	}
     }
 
-    List<Map<String, Integer>> deliveries = new ArrayList<Map<String, Integer>>(); // Deliveries given from the market
-    List <MarketAgent> markets = new ArrayList<MarketAgent>(); // List of cook’s markets
+    List<Map<String, Integer>> deliveries = Collections.synchronizedList(new ArrayList<Map<String, Integer>>()); // Deliveries given from the market
+    List <MarketAgent> markets = Collections.synchronizedList(new ArrayList<MarketAgent>()); // List of cook’s markets
     int nextMarket = 0; // Used to selected which market to order from
-    List<ETA> arrivalTimes = new ArrayList<ETA>(); // Receipts for deliveries with tracking information
+    List<ETA> arrivalTimes = Collections.synchronizedList(new ArrayList<ETA>()); // Receipts for deliveries with tracking information
 
     /*Part 2 Non-Normative*/
     int REASONABLE_WAIT = 8000; // The cook will be willing to wait 5000 milliseconds for an order to arrive, else he/she will tell the customer to change an order

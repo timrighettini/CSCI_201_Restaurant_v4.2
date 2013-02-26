@@ -58,7 +58,7 @@ public class HostAgent extends Agent implements Host {
     private String name;
     
     /*Part 3 (Non-)Normative*/
-    List<WaiterAgent> waitersWhoWantToBreak = new ArrayList<WaiterAgent>(); // The dataType may be changed to something else for simplicity or to reduce redundancy in the future
+    List<WaiterAgent> waitersWhoWantToBreak = Collections.synchronizedList(new ArrayList<WaiterAgent>()); // The dataType may be changed to something else for simplicity or to reduce redundancy in the future
 
     /*Part 4 Non-Normative*/
     enum customerState {pending, yes, no};
@@ -72,7 +72,7 @@ public class HostAgent extends Agent implements Host {
     		this.messaged = false;
     	}
     }
-    List<PotentialCustomer> tablesFullCustomers = new ArrayList<PotentialCustomer>();
+    List<PotentialCustomer> tablesFullCustomers = Collections.synchronizedList(new ArrayList<PotentialCustomer>());
 
 
     /** Constructor for HostAgent class 
