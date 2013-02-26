@@ -107,7 +107,13 @@ public abstract class Agent {
 		private void stopAgent() {
 			goOn = false;
 			this.interrupt();
-		}
+		}		
+
+	}
+	
+	// New method to check the number of permits the semaphore has
+	protected int getPermitNumber() {
+		return stateChange.availablePermits();
 	}
 }
 

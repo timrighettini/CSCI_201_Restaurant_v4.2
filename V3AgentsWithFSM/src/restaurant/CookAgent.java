@@ -16,7 +16,7 @@ import java.awt.Color;
 public class CookAgent extends Agent implements Cook {
 
     //List of all the orders
-    private List<Order> orders = new ArrayList<Order>();
+    private List<CookOrder> orders = new ArrayList<CookOrder>();
     private Map<String,FoodData> inventory = new HashMap<String,FoodData>();
     public enum Status {pending, cooking, done}; // order status
 
@@ -78,31 +78,33 @@ public class CookAgent extends Agent implements Cook {
      *  Contains the waiter, table number, food item,
      *  cooktime and status.
      */
-    private class Order {
-	public WaiterAgent waiter;
-	public int tableNum;
-	public String choice;
-	public Status status;
-	public Food food; //a gui variable
-	public boolean waitingForShipment = false; // This will be used keep an order on standby until a shipment arrives if it has already been ordered
-
-	/** Constructor for Order class 
-	 * @param waiter waiter that this order belongs to
-	 * @param tableNum identification number for the table
-	 * @param choice type of food to be cooked 
-	 */
-	public Order(Waiter waiter, int tableNum, String choice){
-	    this.waiter = (WaiterAgent) waiter;
-	    this.choice = choice;
-	    this.tableNum = tableNum;
-	    this.status = Status.pending;
-	}
-
-	/** Represents the object as a string */
-	public String toString(){
-	    return choice + " for " + waiter ;
-	}
-    }
+    
+    /*This class was made public within the restaurant package to allow for easy usage of shared data for the restaurant producer-consumer monitor*/
+//    private class CookOrder {
+//	public WaiterAgent waiter;
+//	public int tableNum;
+//	public String choice;
+//	public Status status;
+//	public Food food; //a gui variable
+//	public boolean waitingForShipment = false; // This will be used keep an order on standby until a shipment arrives if it has already been ordered
+//
+//	/** Constructor for CookOrder class 
+//	 * @param waiter waiter that this order belongs to
+//	 * @param tableNum identification number for the table
+//	 * @param choice type of food to be cooked 
+//	 */
+//	public CookOrder(Waiter waiter, int tableNum, String choice){
+//	    this.waiter = (WaiterAgent) waiter;
+//	    this.choice = choice;
+//	    this.tableNum = tableNum;
+//	    this.status = Status.pending;
+//	}
+//
+//	/** Represents the object as a string */
+//	public String toString(){
+//	    return choice + " for " + waiter ;
+//	}
+//    }
 
     /*Part 2 Normative*/
     private class ETA {
@@ -125,6 +127,8 @@ public class CookAgent extends Agent implements Cook {
     /*Part 2 Non-Normative*/
     int REASONABLE_WAIT = 8000; // The cook will be willing to wait 5000 milliseconds for an order to arrive, else he/she will tell the customer to change an order
     
+    /* New to v4.2*/
+    private volatile int totalCallTasks = 0; // This value will keep track of how many callTasks have been called in the scheduler.  If this value is not 0, then the callTask will not fire
     
     // *** MESSAGES ***
 
@@ -134,7 +138,7 @@ public class CookAgent extends Agent implements Cook {
      * @param choice type of food to be cooked
      */
     public void msgHereIsAnOrder(Waiter waiter, int tableNum, String choice){
-	orders.add(new Order(waiter, tableNum, choice));
+	orders.add(new CookOrder(waiter, tableNum, choice));
 	stateChanged();
     }
     
@@ -172,18 +176,24 @@ public class CookAgent extends Agent implements Cook {
     }
     	
 	//If there exists an order o whose status is done, place o.
-	for(Order o:orders){
+	for(CookOrder o:orders){
 	    if(o.status == Status.done && o.waitingForShipment == false){
 		placeOrder(o);
 		return true;
 	    }
 	}
 	//If there exists an order o whose status is pending, cook o.
-	for(Order o:orders){
+	for(CookOrder o:orders){
 	    if(o.status == Status.pending){
 		cookOrder(o);
 		return true;
 	    }
+	}
+	
+	// If there exists an order in the revolving stand, take it out and place it within the cooks order list
+	if (restaurant.revolvingStand.getSize() > 0) { /* New to v4.2 */
+		getOrderFromRevolvingStand();
+		return true;
 	}
 	
 //	/*Part 2 Normative*/
@@ -196,6 +206,12 @@ public class CookAgent extends Agent implements Cook {
 				return true;
 			}			
 		}
+	}
+	
+	// Make sure to wake up the cook so that he/she can constantly check the shared data structure
+	if (super.getPermitNumber() == 0 && totalCallTasks == 0) {
+		timer.schedule(new CallTask(this), 10000);
+		totalCallTasks++;
 	}
 
 	//we have tried all our rules (in this case only one) and found
@@ -210,7 +226,7 @@ public class CookAgent extends Agent implements Cook {
     /** Starts a timer for the order that needs to be cooked. 
      * @param order
      */
-    private void cookOrder(Order order){
+    private void cookOrder(CookOrder order){
     	if (inventory.get(order.choice).amount <= 0 && order.waitingForShipment == false) {
     		boolean removeOrder = true; // flag to remove the order
     		long timeForDelivery = 0;
@@ -246,7 +262,7 @@ public class CookAgent extends Agent implements Cook {
 	    }
     }
 
-    private void placeOrder(Order order){
+    private void placeOrder(CookOrder order){
 	DoPlacement(order);
 	order.waiter.msgOrderIsReady(order.tableNum, order.food);
 	orders.remove(order);
@@ -279,7 +295,7 @@ public class CookAgent extends Agent implements Cook {
 			inventory.get(s).amount += items.get(s); // Add the items from the order into the inventory
 			itemOrdered.put(s, false); // Set this ordered value to false so that the item can be ordered again if it runs out
 			// Check through orders arrayList and make all waitForShipment values to false so that the items can actually be cooked
-			for (Order o: orders) {
+			for (CookOrder o: orders) {
 				o.waitingForShipment = false;	
 			}
 		}   
@@ -287,7 +303,12 @@ public class CookAgent extends Agent implements Cook {
     	deliveries.remove(items);
     }
 
-
+    /* New in v4.2 */
+    private void getOrderFromRevolvingStand() {
+    	CookOrder o = restaurant.revolvingStand.remove();
+    	orders.add(o);
+    	print("Order removed from the revolving stand: " + o.toString());
+    }
 
     // *** EXTRA -- all the simulation routines***
 
@@ -296,7 +317,7 @@ public class CookAgent extends Agent implements Cook {
         return name;
     }
 
-    private void DoCooking(final Order order){
+    private void DoCooking(final CookOrder order){
     // Decrement the inventory foodData amount for this specific item by 1
     inventory.get(order.choice).amount -= 1;
     	
@@ -315,7 +336,7 @@ public class CookAgent extends Agent implements Cook {
 	*/
     }
     
-    public void DoPlacement(Order order){
+    public void DoPlacement(CookOrder order){
 	print("Order finished: " + order + " for table:" + (order.tableNum+1));
 	order.food.placeOnCounter();
     }
@@ -323,8 +344,8 @@ public class CookAgent extends Agent implements Cook {
     // Temporary Addition to the code just to see if my implementation will work - Lab 2 - might be permanent...
 	private class CookTask extends TimerTask {
 	// This would get all of the TimerTask functionality
-		final Order cookOrder; // Need a reference to the order, or else this will not work
-		public CookTask(final Order order) {
+		final CookOrder cookOrder; // Need a reference to the order, or else this will not work
+		public CookTask(final CookOrder order) {
 			cookOrder = order;
 		}
 	
@@ -332,6 +353,30 @@ public class CookAgent extends Agent implements Cook {
 			cookOrder.status = Status.done;
 			stateChanged();
 		} // Since this class will be declared INSIDE CookAgent, the data from CookAgent is accessible from this class
+	}
+	
+	private class CallTask extends TimerTask { // Used to keep the number of checks for the shared data array down
+		CookAgent c;
+		public CallTask(CookAgent c) {
+			this.c = c;	
+		}
+		public void run() {
+			if (c.getPermitNumber() == 0 && c.getTotalCallTasks() == 1) { // Only this thread remains
+				c.print("Checked the revolving stand for items.");
+				stateChanged();
+			}
+			c.decTotalCallTasks();
+		}
+	}
+	
+	public int getTotalCallTasks() {
+		return totalCallTasks;
+	}
+	
+	public void decTotalCallTasks() {
+		if (totalCallTasks > 0) {
+			totalCallTasks--;
+		}
 	}
 	
 	public void addMarket(Market m) { // Will add a market to the cook's set of markets

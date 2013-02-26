@@ -3,6 +3,8 @@ package restaurant.layoutGUI;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+
+import restaurant.RestaurantProducerConsumerMonitor;
 import restaurant.layoutGUI.*;
 import java.util.concurrent.*; 
 
@@ -23,6 +25,10 @@ public class Restaurant extends JFrame implements MouseListener
 	public Semaphore lock = new Semaphore(1, true);
     
     private	int tune_mouse_X, tune_mouse_Y, tune_waiter_pos_X, tune_waiter_pos_Y;
+    
+    /* New to v4.2 */
+    public RestaurantProducerConsumerMonitor revolvingStand = new RestaurantProducerConsumerMonitor(); 
+    // Create the shared data monitor for the shared data waiters and cook
     
     public Restaurant(String caption, int x, int y, Semaphore[][] grid, Table[] tables)
     {

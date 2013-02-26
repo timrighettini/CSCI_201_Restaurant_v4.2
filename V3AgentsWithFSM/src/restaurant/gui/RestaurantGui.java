@@ -3,6 +3,7 @@ package restaurant.gui;
 import restaurant.CustomerAgent;
 import restaurant.MarketAgent;
 import restaurant.WaiterAgent;
+import restaurant.RestaurantProducerConsumerMonitor;
 
 import javax.swing.*;
 
@@ -20,7 +21,7 @@ import java.text.*;
  * Contains the main frame and subsequent panels */
 public class RestaurantGui extends JFrame implements ActionListener{
    
-    private final int WINDOWX = 650;
+    private final int WINDOWX = 800;
     private final int WINDOWY = 450;
 
     private RestaurantPanel restPanel = new RestaurantPanel(this);
@@ -77,7 +78,7 @@ public class RestaurantGui extends JFrame implements ActionListener{
 
 	getContentPane().setLayout(new BoxLayout((Container)getContentPane(),BoxLayout.Y_AXIS));
 
-	Dimension rest = new Dimension(WINDOWX, (int)(WINDOWY*.5));
+	Dimension rest = new Dimension((int)(WINDOWX * .975), (int)(WINDOWY*.5));
 	Dimension info = new Dimension(WINDOWX, (int)(WINDOWY*.25));
 	restPanel.setPreferredSize(rest);
 	restPanel.setMinimumSize(rest);

@@ -5,6 +5,7 @@ import restaurant.gui.RestaurantGui;
 import restaurant.layoutGUI.*;
 import agent.Agent;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.awt.Color;
@@ -57,6 +58,8 @@ public class CustomerAgent extends Agent implements Customer {
     /*Part 4.2 Non-Normative*/
     private boolean willOnlyPayFully = true;  // Will be set-able in the GUI or in some other fashion
 
+    /*New to v4.2*/
+    private Semaphore multiAction = new Semaphore(0, true); 
     
     /** Constructor for CustomerAgent class 
      * @param name name of the customer
@@ -115,8 +118,9 @@ public class CustomerAgent extends Agent implements Customer {
     }
     /** Waiter sends this message to take the customer's order */
     public void msgWhatWouldYouLike(){
-	events.add(AgentEvent.waiterToTakeOrder);
-	stateChanged(); 
+	//events.add(AgentEvent.waiterToTakeOrder);
+	stateChanged();
+	multiAction.release(); // Replaces the FSM event, since this controls the MultiStep action
     }
 
     /** Waiter sends this when the food is ready 
@@ -197,18 +201,20 @@ public class CustomerAgent extends Agent implements Customer {
 	}
 	if (state == AgentState.SeatedWithMenu) {
 	    if (event == AgentEvent.decidedChoice)	{
-		callWaiter();
-		state = AgentState.WaiterCalled;
+		//callWaiter();
+	    callWaiterAndOrderFood(); // MultiStep Action
+		//state = AgentState.WaiterCalled;
+		state = AgentState.WaitingForFood; // End of MultiStep Action 
 		return true;
 	    }
 	}
-	if (state == AgentState.WaiterCalled) {
-	    if (event == AgentEvent.waiterToTakeOrder)	{
-		orderFood();
-		state = AgentState.WaitingForFood;
-		return true;
-	    }
-	}
+//	if (state == AgentState.WaiterCalled) {
+//	    if (event == AgentEvent.waiterToTakeOrder)	{
+//		orderFood();
+//		state = AgentState.WaitingForFood;
+//		return true;
+//	    }
+//	}
 	if (state == AgentState.WaitingForFood) {
 	    if (event == AgentEvent.foodDelivered)	{
 		eatFood();
@@ -271,10 +277,11 @@ public class CustomerAgent extends Agent implements Customer {
 	    3000);//how long to wait before running task
 	stateChanged();
     }
+    
     private void callWaiter(){
-	print("I decided!");
-	waiter.msgImReadyToOrder(this);
-	stateChanged();
+    	print("I decided!");
+		waiter.msgImReadyToOrder(this);
+		// stateChanged(); // This is not needed, otherwise, two permits would be released from the semaphore
     }
 
     /** Picks a random choice from the menu and sends it to the waiter */
@@ -394,6 +401,24 @@ public class CustomerAgent extends Agent implements Customer {
 		setHungry();		    
 	    }},
 	    15000);//how long to wait before running task
+    }
+    
+    /* New to v4.2 */
+    private void callWaiterAndOrderFood() {
+    	callWaiter();
+    	
+    	// Block thread until waiter sends the What Would You Like message to the customer
+    	try {
+    		multiAction.acquire();
+    	}
+		catch (InterruptedException e) {
+			// Should never get here
+		} 
+    	catch (Exception e) {
+    		print("Unexpected exception caught in Agent thread:", e);
+    	}
+    	
+    	orderFood();
     }
 
     // *** EXTRA ***

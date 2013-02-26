@@ -40,6 +40,7 @@ public class RestaurantPanel extends JPanel {
     private JPanel restLabel = new JPanel();
     private ListPanel customerPanel = new ListPanel(this, "Customers");
     private ListPanel waiterPanel = new ListPanel(this, "Waiters");
+    private ListPanel sharedWaiterPanel = new ListPanel(this, "SDWaiters");
     private JPanel group = new JPanel();
 
     private RestaurantGui gui; //reference to main gui
@@ -113,6 +114,7 @@ public class RestaurantPanel extends JPanel {
 	group.add(waiterPanel);
 	group.add(customerPanel);
 	group.add(marketPanel);
+	group.add(sharedWaiterPanel);
 	
 	initRestLabel();
 	add(restLabel);
@@ -148,13 +150,21 @@ public class RestaurantPanel extends JPanel {
 		if(temp.getName() == name)
 		    gui.updateInfoPanel(temp);
 	    }
-	}else if(type.equals("Waiters")){
+	}
+	else if(type.equals("Waiters")){
 	    for(int i=0; i < waiters.size(); i++){
 		WaiterAgent temp = waiters.get(i);
 		if(temp.getName() == name)
 		    gui.updateInfoPanel(temp);
 	    }
-	}
+	}	
+	else if(type.equals("SDWaiters")){
+	    for(int i=0; i < waiters.size(); i++){
+		WaiterAgent temp = waiters.get(i);
+		if(temp.getName() == name)
+		    gui.updateInfoPanel(temp);
+	    }
+	}	
     else if(type.equals("Markets")){
 	    for(int i=0; i < markets.size(); i++){
 		MarketAgent temp = markets.get(i);
@@ -169,32 +179,45 @@ public class RestaurantPanel extends JPanel {
      * @param name name of person */
     public void addPerson(String type, String name){
 	
-	if(type.equals("Customers")){
-	    CustomerAgent c = new CustomerAgent(name, gui, restaurant);
-	    c.setHost(host);
-	    c.setCashier(cashier);
-	    customers.add(c);	    
-	    c.startThread(); //Customer is fsm.
-	    c.setHungry();
-	} else if(type.equals("Waiters")){
-	    AStarTraversal aStarTraversal = new AStarTraversal(grid);
-	    WaiterAgent w = new WaiterAgent(name, aStarTraversal, restaurant, tables);
-	    w.setHost(host);
-	    w.setCook(cook);
-	    w.setCashier(cashier);
-	    host.setWaiter(w);
-	    waiters.add(w);
-	    w.startThread();
-	}
-	
-	else if(type.equals("Markets")){ // New Market instantiation code
-	    MarketAgent m = new MarketAgent(name);
-	    m.setCook(cook);
-	    m.setCashier(cashier);
-	    cook.addMarket(m);	  
-	    markets.add(m);
-	    m.startThread();
-	}
+		if(type.equals("Customers")) {
+		    CustomerAgent c = new CustomerAgent(name, gui, restaurant);
+		    c.setHost(host);
+		    c.setCashier(cashier);
+		    customers.add(c);	    
+		    c.startThread(); //Customer is fsm.
+		    c.setHungry();
+		} 
+		
+		else if(type.equals("Waiters")) {
+		    AStarTraversal aStarTraversal = new AStarTraversal(grid);
+		    WaiterAgent w = new BasicWaiterAgent(name, aStarTraversal, restaurant, tables); // v4.2 waiter
+		    w.setHost(host);
+		    w.setCook(cook);
+		    w.setCashier(cashier);
+		    host.setWaiter(w);
+		    waiters.add(w);
+		    w.startThread();
+		}
+		
+		else if(type.equals("SDWaiters")) {
+		    AStarTraversal aStarTraversal = new AStarTraversal(grid);
+		    WaiterAgent w = new SharedDataWaiterAgent(name, aStarTraversal, restaurant, tables); // v4.2 Shared Data waiter
+		    w.setHost(host);
+		    w.setCook(cook);
+		    w.setCashier(cashier);
+		    host.setWaiter(w);
+		    waiters.add(w);
+		    w.startThread();
+		}
+		
+		else if(type.equals("Markets")){ // New Market instantiation code
+		    MarketAgent m = new MarketAgent(name);
+		    m.setCook(cook);
+		    m.setCashier(cashier);
+		    cook.addMarket(m);	  
+		    markets.add(m);
+		    m.startThread();
+		}
     }	
 
 	public void addTable() {

@@ -10,6 +10,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import astar.*;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 /** Restaurant Waiter Agent.
  * Sits customers at assigned tables and takes their orders.
@@ -31,31 +32,31 @@ public class WaiterAgent extends Agent implements Waiter {
     /** Private class to hold information for each customer.
      * Contains a reference to the customer, his choice, 
      * table number, and state */
-    private class MyCustomer {
-	public CustomerState state;
-	public CustomerAgent cmr;
-	public String choice;
-	public int tableNum;
-	public Food food; //gui thing
-
-	/** Constructor for MyCustomer class.
-	 * @param cmr reference to customer
-	 * @param num assigned table number */
-	public MyCustomer(Customer cmr, int num){
-	    this.cmr = (CustomerAgent) cmr;
-	    tableNum = num;
-	    state = CustomerState.NO_ACTION;
-	}
+    protected class MyCustomer {
+		public CustomerState state;
+		public CustomerAgent cmr;
+		public String choice;
+		public int tableNum;
+		public Food food; //gui thing
+	
+		/** Constructor for MyCustomer class.
+		 * @param cmr reference to customer
+		 * @param num assigned table number */
+		public MyCustomer(Customer cmr, int num){
+		    this.cmr = (CustomerAgent) cmr;
+		    tableNum = num;
+		    state = CustomerState.NO_ACTION;
+		}
     }
 
     //Name of waiter
-    private String name;
+    protected String name;
 
     //All the customers that this waiter is serving
-    private List<MyCustomer> customers = new ArrayList<MyCustomer>();
+    protected List<MyCustomer> customers = new ArrayList<MyCustomer>();
 
-    private HostAgent host;
-    private CookAgent cook;
+    protected HostAgent host;
+    protected CookAgent cook;
 
     //Animation Variables
     AStarTraversal aStar;
@@ -77,6 +78,8 @@ public class WaiterAgent extends Agent implements Waiter {
     private enum willHostAllowBreak {na, pending, yes, no, waiting};
     willHostAllowBreak allowBreak = willHostAllowBreak.na; // instantiate the enum
     
+    /*New to v4.2*/
+    private Semaphore multiAction = new Semaphore(0, true);     
 
     /** Constructor for WaiterAgent class
      * @param name name of waiter
@@ -86,7 +89,7 @@ public class WaiterAgent extends Agent implements Waiter {
 	super();
 
 	this.name = name;
-
+	
 	//initialize all the animation objects
 	this.aStar = aStar;
 	this.restaurant = restaurant;//the layout for astar
@@ -132,8 +135,9 @@ public class WaiterAgent extends Agent implements Waiter {
 	for(MyCustomer c:customers){
 	    if(c.cmr.equals(customer)){
 		c.choice = choice;
-		c.state = CustomerState.ORDER_PENDING;
+		//c.state = CustomerState.ORDER_PENDING;
 		stateChanged();
+		multiAction.release(); // Replaces the FSM event, since this controls the MultiStep action
 		return;
 	    }
 	}
@@ -290,19 +294,20 @@ public class WaiterAgent extends Agent implements Waiter {
 		}
 	    }
 
-	    //Gives all pending orders to the cook
-	    for(MyCustomer c:customers){
-		if(c.state == CustomerState.ORDER_PENDING){
-		    giveOrderToCook(c);
-		    return true;
-		}
-	    }
+//	    //Gives all pending orders to the cook
+//	    for(MyCustomer c:customers){
+//		if(c.state == CustomerState.ORDER_PENDING){
+//		    giveOrderToCook(c);
+//		    return true;
+//		}
+//	    }
 
 	    //Takes new orders for customers that are ready
 	    for(MyCustomer c:customers){
 		//print("testing for ready to order"+c.state);
 		if(c.state == CustomerState.READY_TO_ORDER) {
-		    takeOrder(c);
+		    //takeOrder(c);
+			takeOrderAndGiveOrderToCook(c);
 		    return true;
 		}
 	    }	   
@@ -337,12 +342,12 @@ public class WaiterAgent extends Agent implements Waiter {
 	DoTakeOrder(customer); //animation
 	customer.state = CustomerState.NO_ACTION;
 	customer.cmr.msgWhatWouldYouLike();
-	stateChanged();
+	// stateChanged(); // This is not needed, otherwise, two permits would be released from the semaphore 
     }
 
     /** Gives any pending orders to the cook 
      * @param customer customer that needs food cooked */
-    private void giveOrderToCook(MyCustomer customer) {
+    protected void giveOrderToCook(MyCustomer customer) {
 	//In our animation the waiter does not move to the cook in
 	//order to give him an order. We assume some sort of electronic
 	//method implemented as our message to the cook. So there is no
@@ -394,7 +399,8 @@ public class WaiterAgent extends Agent implements Waiter {
 	stateChanged();
     }
     
- 
+    
+    /*New to v4.1*/
     
     /*Part 2 Non-Normative*/
     private void tellCustomerToChangeOrder(MyCustomer cust) {
@@ -433,7 +439,25 @@ public class WaiterAgent extends Agent implements Waiter {
     	host.msgMayITakeABreak(this);
 		allowBreak = willHostAllowBreak.waiting;
     }
-
+    
+    /*New to v4.2*/
+    private void takeOrderAndGiveOrderToCook(MyCustomer customer) {
+    	
+    	takeOrder(customer);
+    	
+    	// Block thread until customer sends the Here Is My Choice message to the waiter
+    	try {
+    		multiAction.acquire();
+    	}
+		catch (InterruptedException e) {
+			// Should never get here
+		} 
+    	catch (Exception e) {
+    		print("Unexpected exception caught in Agent thread:", e);
+    	}
+    	
+    	giveOrderToCook(customer);    	
+    }
     
 
     // Animation Actions
