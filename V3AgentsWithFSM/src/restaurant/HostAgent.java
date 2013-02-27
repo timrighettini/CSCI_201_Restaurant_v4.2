@@ -95,12 +95,14 @@ public class HostAgent extends Agent implements Host {
     public void msgIWantToEat(Customer customer){
     	boolean tableFree = false; // If there are NO free tables, then this variable will NOT be changed in the following loop
     	int tablesOccupied = 0; // Will keep track of how many tables are occupied, and how many seats are left
-    	for (int i = 0; i < tables.length; i++) {
-    		if (tables[i].occupied == false) {
-    			tableFree = true;
-    			tablesOccupied++;
-    			break;
-    		}
+    	synchronized(tables) {
+	    	for (int i = 0; i < tables.length; i++) {
+	    		if (tables[i].occupied == false) {
+	    			tableFree = true;
+	    			tablesOccupied++;
+	    			break;
+	    		}
+	    	}
     	}
     	if (tableFree == true && waitList.size() <= 4 - tablesOccupied) { // Add customer to waitlist, as seen regularly
     		waitList.add((CustomerAgent) customer);
@@ -129,20 +131,24 @@ public class HostAgent extends Agent implements Host {
 
     /*Part 4 Non-Normative*/
     public void  msgThankYouIllWait(Customer c) {
-    	for (PotentialCustomer t: tablesFullCustomers) {
-    		if (t.cmr.getName().equals(c.getName())) {
-    			t.willWait = customerState.yes;
-        		stateChanged();
-    		}
+    	synchronized(tablesFullCustomers) {
+	    	for (PotentialCustomer t: tablesFullCustomers) {
+	    		if (t.cmr.getName().equals(c.getName())) {
+	    			t.willWait = customerState.yes;
+	        		stateChanged();
+	    		}
+	    	}
     	}
     }
 
     public void msgSorryIHaveToLeave(Customer c) {
-    	for (PotentialCustomer t: tablesFullCustomers) {
-    		if (t.cmr.getName().equals(c.getName())) {
-    			t.willWait = customerState.no;
-        		stateChanged();
-    		}
+    	synchronized(tablesFullCustomers) {
+	    	for (PotentialCustomer t: tablesFullCustomers) {
+	    		if (t.cmr.getName().equals(c.getName())) {
+	    			t.willWait = customerState.no;
+	        		stateChanged();
+	    		}
+	    	}
     	}
     }
 
@@ -152,47 +158,66 @@ public class HostAgent extends Agent implements Host {
 	
 	if(!waitList.isEmpty() && !waiters.isEmpty()){
 	    synchronized(waiters){
-		//Finds the next waiter that is working
-		while(waiters.get(nextWaiter).wtr.getOnBreak()){
-		    nextWaiter = (nextWaiter+1)%waiters.size();
-		}
+			//Finds the next waiter that is working
+			while(waiters.get(nextWaiter).wtr.getOnBreak()){
+			    nextWaiter = (nextWaiter+1)%waiters.size();
+			}
 	    }
 	    print("picking waiter number:"+nextWaiter);
 	    //Then runs through the tables and finds the first unoccupied 
 	    //table and tells the waiter to sit the first customer at that table
-	    for(int i=0; i < nTables; i++){
-
-		if(!tables[i].occupied && waitList.get(0).getRestaurantFull() == false) { // Will prevent a customer from being selected that is in the middle of deciding to stay or not
-		    synchronized(waitList){
-			tellWaiterToSitCustomerAtTable(waiters.get(nextWaiter),
-			    waitList.get(0), i);
-		    }
-		    return true;
-		}
-	    }      
+	    synchronized(tables) {
+		    for(int i=0; i < nTables; i++){
+	
+				if(!tables[i].occupied && waitList.get(0).getRestaurantFull() == false) { // Will prevent a customer from being selected that is in the middle of deciding to stay or not
+				    synchronized(waitList){
+					tellWaiterToSitCustomerAtTable(waiters.get(nextWaiter),
+					    waitList.get(0), i);
+				    }
+				    return true;
+				}
+		    }      
+	    }
 	}
 	
     /*Part 4 Non-Normative*/
-    // Check to see if any non-waitlist customers are in need of service 
-    for (Customer t: waitList) {    	
-	    	if (((CustomerAgent) t).getRestaurantFull() == true) {
-		    	if (((CustomerAgent) t).getMessaged() == false) {
-		    		doSendCustomerWaitingMessage(t); // Send cmr a message to see if he/she wants to wait
-		    		((CustomerAgent) t).setMessaged(true);
-		    		return true;
-		    	}
-		    	else {
-		    		doAddCustomerToWaitList(t); // do (not) add the customer to the waitlist after the response has been received
-		    		return true;
-		    	}
-    		}
-    	
-    }
+    // Check to see if any non-waitlist customers are in need of service
+	
+	// Use temp variable to make sure that the action is not called in the synchronized loop
+	Customer tempCustomer = null;
+	synchronized(waitList) {
+	    for (Customer t: waitList) {    	
+	    	tempCustomer = t;
+	    	break;
+	    }
+	}
+	if (tempCustomer != null) {
+    	if (((CustomerAgent) tempCustomer).getRestaurantFull() == true) {
+	    	if (((CustomerAgent) tempCustomer).getMessaged() == false) {
+	    		doSendCustomerWaitingMessage(tempCustomer); // Send cmr a message to see if he/she wants to wait
+	    		((CustomerAgent) tempCustomer).setMessaged(true);
+	    		return true;
+	    	}
+	    	else {
+	    		doAddCustomerToWaitList(tempCustomer); // do (not) add the customer to the waitlist after the response has been received
+	    		return true;
+	    	}
+		}  		
+	}
     
     // Check to see if any waiters would like to go on break
-    for (Waiter w: waitersWhoWantToBreak) {
-		doMessageWaiterBreak(w, !checkRestaurantBusy());
-		break;
+	
+	// Make temp variable here, as with the last loop
+	Waiter tempWaiter = null;
+	synchronized(waitersWhoWantToBreak) {
+	    for (Waiter w: waitersWhoWantToBreak) {
+	    	tempWaiter = w;
+	    	break;
+	    }
+	}
+    if (tempWaiter != null) {
+		doMessageWaiterBreak(tempWaiter, !checkRestaurantBusy());	
+    	return true;
     }
 
 	//we have tried all our rules (in this case only one) and found
@@ -252,10 +277,12 @@ public class HostAgent extends Agent implements Host {
     	// Check to see if all waiters are on break
     	int numWaitersOnBreak = 0;
     	
-    	for (int i = 0; i < waiters.size(); i++) {
-    		if (waiters.get(i).wtr.isOnBreak() == true) {
-    			numWaitersOnBreak++;
-    		}
+    	synchronized(waiters) {
+	    	for (int i = 0; i < waiters.size(); i++) {
+	    		if (waiters.get(i).wtr.isOnBreak() == true) {
+	    			numWaitersOnBreak++;
+	    		}
+	    	}
     	}
     	
     	print("Waiters on Break: " + numWaitersOnBreak);
@@ -290,9 +317,11 @@ public class HostAgent extends Agent implements Host {
     public void addTable() {
 	nTables++;
 	Table[] tempTables = new Table[nTables];
-	for(int i=0; i < nTables - 1; i++){
-	    tempTables[i] = tables[i];
-	}  		  			
+	synchronized(tables) {
+		for(int i=0; i < nTables - 1; i++){
+		    tempTables[i] = tables[i];
+		}  		  			
+	}
 	tempTables[nTables - 1] = new Table(nTables - 1);
 	tables = tempTables;
     }
