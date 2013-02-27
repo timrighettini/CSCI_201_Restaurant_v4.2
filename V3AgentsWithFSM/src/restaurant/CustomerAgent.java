@@ -41,7 +41,7 @@ public class CustomerAgent extends Agent implements Customer {
     private CashierAgent cashier; // The customer pays this agent before leaving with “wallet” – see below 
 
     private Bill bill; // Will be given from the waiter and passed to the cashier
-    private volatile double wallet = 25.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00, but can be changed in the GUI
+    private volatile double wallet = 125.00; // Will hold how much money a customer has (will be thread safe) -- Starting value is $15.00, but can be changed in the GUI
     private volatile double amountOwed = 0.00; // How much money the customer owes the restaurant (will be thread safe)
     
     private Map<String, Boolean> orderState = new HashMap<String, Boolean>();
