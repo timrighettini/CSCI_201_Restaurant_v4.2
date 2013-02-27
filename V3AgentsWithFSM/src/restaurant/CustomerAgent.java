@@ -290,14 +290,16 @@ public class CustomerAgent extends Agent implements Customer {
     	Map<String, Boolean> cannotAfford = new HashMap<String, Boolean>(); // This map will keep track of which items the customer cannot afford
     	boolean canAffordAnItem = false; // If this value is true, then the customer can afford something
     	
-    	for (int i = 0; i < menu.prices.length; i++) { // Will see which food choices the customer can afford 
-    		if (menu.prices[i] > wallet) { // Item is too expensive
-    			cannotAfford.put(menu.choices[i], true);    			
-    		}
-    		else {
-    			cannotAfford.put(menu.choices[i], false);
-    			canAffordAnItem = true;
-    		}    		
+    	synchronized(menu) {
+	    	for (int i = 0; i < menu.prices.length; i++) { // Will see which food choices the customer can afford 
+	    		if (menu.prices[i] > wallet) { // Item is too expensive
+	    			cannotAfford.put(menu.choices[i], true);    			
+	    		}
+	    		else {
+	    			cannotAfford.put(menu.choices[i], false);
+	    			canAffordAnItem = true;
+	    		}    		
+	    	}
     	}
     	
     	if (canAffordAnItem == false && willOnlyPayFully == true) { // Then the customer will leave the restaurant 
@@ -509,17 +511,21 @@ public class CustomerAgent extends Agent implements Customer {
     	// If all states are set to false, put them all back to true -- the customer HAS to order something, you know...
     	Set<String> strings = orderState.keySet();
     	boolean allFalse = true; // Check to see if all the values are really false
-    	for (String str: strings) {
-    		if (orderState.get(str) == true) {
-    			allFalse = false;
-    			break;
-    		}
+    	synchronized(strings) {
+	    	for (String str: strings) {
+	    		if (orderState.get(str) == true) {
+	    			allFalse = false;
+	    			break;
+	    		}
+	    	}
     	}
     	
     	if (allFalse == true) { // If so, then set all orderState values to true
-    	   	for (String str: strings) {
-        		orderState.put(str, true);        		
-        	}
+    	    synchronized(strings) {
+    		    for (String str: strings) {
+	         		orderState.put(str, true);        		
+    		    }
+    	    }
     	}    	
     }
     
