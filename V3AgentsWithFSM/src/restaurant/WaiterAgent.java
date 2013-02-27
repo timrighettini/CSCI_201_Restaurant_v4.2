@@ -118,57 +118,65 @@ public class WaiterAgent extends Agent implements Waiter {
      * @param customer customer who is ready to order.
      */
     public void msgImReadyToOrder(Customer customer){
-	//print("received msgImReadyToOrder from:"+customer);
-	for(int i=0; i < customers.size(); i++){
-	    //if(customers.get(i).cmr.equals(customer)){
-	    if (customers.get(i).cmr == customer){
-		customers.get(i).state = CustomerState.READY_TO_ORDER;
-		stateChanged();
-		return;
-	    }
-	}
-	System.out.println("msgImReadyToOrder in WaiterAgent, didn't find him?");
+    	//print("received msgImReadyToOrder from:"+customer);
+		synchronized(customers) {
+			for(int i=0; i < customers.size(); i++){
+			    //if(customers.get(i).cmr.equals(customer)){
+			    if (customers.get(i).cmr == customer){
+				customers.get(i).state = CustomerState.READY_TO_ORDER;
+				stateChanged();
+				return;
+			    }
+			}
+		}
+		System.out.println("msgImReadyToOrder in WaiterAgent, didn't find him?");
     }
 
     /** Customer sends this when they have decided what they want to eat 
      * @param customer customer who has decided their choice
      * @param choice the food item that the customer chose */
     public void msgHereIsMyChoice(Customer customer, String choice){
-	for(MyCustomer c:customers){
-	    if(c.cmr.equals(customer)){
-		c.choice = choice;
-		//c.state = CustomerState.ORDER_PENDING;
-		stateChanged();
-		multiAction.release(); // Replaces the FSM event, since this controls the MultiStep action
-		return;
-	    }
-	}
+		synchronized(customers) {
+	    	for(MyCustomer c:customers){
+				    if(c.cmr.equals(customer)){
+					c.choice = choice;
+					//c.state = CustomerState.ORDER_PENDING;
+					stateChanged();
+					multiAction.release(); // Replaces the FSM event, since this controls the MultiStep action
+					return;
+			    }
+			}
+		}
     }
 
     /** Cook sends this when the order is ready.
      * @param tableNum identification number of table whose food is ready
      * @param f is the guiFood object */
     public void msgOrderIsReady(int tableNum, Food f){
-	for(MyCustomer c:customers){
-	    if(c.tableNum == tableNum){
-		c.state = CustomerState.ORDER_READY;
-		c.food = f; //so that later we can remove it from the table.
-		stateChanged();
-		return;
-	    }
-	}
+		synchronized(customers) {
+	    	for(MyCustomer c:customers){
+			    if(c.tableNum == tableNum){
+					c.state = CustomerState.ORDER_READY;
+					c.food = f; //so that later we can remove it from the table.
+					stateChanged();
+					return;
+			    }
+	    	}
+		}
     }
 
     /** Customer sends this when they are done eating.
      * @param customer customer who is leaving the restaurant. */
     public void msgDoneEatingAndLeaving(Customer customer){
-	for(MyCustomer c:customers){
-	    if(c.cmr.equals(customer)){
-		c.state = CustomerState.IS_DONE;
-		stateChanged();
-		return;
-	    }
-	}
+		synchronized(customers) {
+	    	for(MyCustomer c:customers){
+			    if(c.cmr.equals(customer)){
+					c.state = CustomerState.IS_DONE;
+					stateChanged();
+					return;
+			    }
+			}
+		}
     }
 
     /** Sent from GUI to control breaks 
@@ -182,12 +190,14 @@ public class WaiterAgent extends Agent implements Waiter {
 
     /*Part 2 Non-Normative*/
     public void msgOutOfThisItem(String choice, int table) { // Tell customer to reorder
-    	for (MyCustomer c: customers) {
-    		if (c.tableNum == table && !customerToChangeOrder.contains(table)) {
-    			customerToChangeOrder.add(table);
-        		stateChanged();
-        		break;
-    		}
+    	synchronized(customers) {
+	    	for (MyCustomer c: customers) {
+	    		if (c.tableNum == table && !customerToChangeOrder.contains(table)) {
+	    			customerToChangeOrder.add(table);
+	        		stateChanged();
+	        		break;
+	    		}
+	    	}
     	}
     }
 
@@ -252,25 +262,33 @@ public class WaiterAgent extends Agent implements Waiter {
       	doReturnToWork();  
       	return true;
     } 
-    	
+    
+    // Create the temp customer variable up here -- as with the other agents
+    MyCustomer tempCustomer = null;   
+    Integer tempTableNum = null;
     	
 	//Runs through the customers for each rule, so 
 	//the waiter doesn't serve only one customer at a time
 	if(!customers.isEmpty()){
 	    //System.out.println("in scheduler, customers not empty:");
-	    //Gives food to customer if the order is ready
+	   
 	    for(MyCustomer c:customers){
-		if(c.state == CustomerState.ORDER_READY) {
-		    giveFoodToCustomer(c);
-		    return true;
-		}
-	    }
-	    //Clears the table if the customer has left
-	    for(MyCustomer c:customers){
-		if(c.state == CustomerState.IS_DONE) {
-		    clearTable(c);
-		    return true;
-		}
+			if(c.state == CustomerState.ORDER_READY) { //Gives food to customer if the order is ready
+				tempCustomer = c;
+				break;
+			}
+			if(c.state == CustomerState.IS_DONE) { //Clears the table if the customer has left
+				tempCustomer = c;
+				break;
+			}
+			if(c.state == CustomerState.NEED_SEATED){ //Seats the customer if they need it
+				tempCustomer = c;
+				break;
+			}
+			if(c.state == CustomerState.READY_TO_ORDER) { //Takes new orders for customers that are ready
+				tempCustomer = c;
+				break;
+			}
 	    }
 	    
 //	    /*Part 2 Non-Normative*/
@@ -279,21 +297,18 @@ public class WaiterAgent extends Agent implements Waiter {
 //	    	return true;
 
 	    // Queue up a customer who is going to change an order
-	    for(Integer tNum: customerToChangeOrder) {
-		    for(MyCustomer c: customers){
-					if(c.tableNum == tNum) { // A customer has requested a change of order, tell this customer to change the order
-						tellCustomerToChangeOrder(c);
-						return true;
-					}
-			    }
-	    }
-
-	    //Seats the customer if they need it
-	    for(MyCustomer c:customers){
-		if(c.state == CustomerState.NEED_SEATED){
-		    seatCustomer(c);
-		    return true;
-		}
+	    synchronized(customerToChangeOrder) {
+		    for(Integer tNum: customerToChangeOrder) {
+		    	synchronized(customers) {
+				    for(MyCustomer c: customers){
+						if(c.tableNum == tNum) { // A customer has requested a change of order, tell this customer to change the order
+							tempCustomer = c;
+							tempTableNum = c.tableNum;
+							break;
+						}
+				    }
+		    	}
+		    }
 	    }
 
 //	    //Gives all pending orders to the cook
@@ -302,18 +317,31 @@ public class WaiterAgent extends Agent implements Waiter {
 //		    giveOrderToCook(c);
 //		    return true;
 //		}
-//	    }
-
-	    //Takes new orders for customers that are ready
-	    for(MyCustomer c:customers){
-		//print("testing for ready to order"+c.state);
-		if(c.state == CustomerState.READY_TO_ORDER) {
-		    //takeOrder(c);
-			takeOrderAndGiveOrderToCook(c);
+//	    } 
+	    
+	}
+	if (tempCustomer != null) {
+		if(tempCustomer.state == CustomerState.ORDER_READY) { //Gives food to customer if the order is ready
+		    giveFoodToCustomer(tempCustomer);
 		    return true;
 		}
-	    }	   
-	    
+		if(tempCustomer.state == CustomerState.IS_DONE) { //Clears the table if the customer has left
+		    clearTable(tempCustomer);
+		    return true;
+		}
+		if(tempCustomer.state == CustomerState.NEED_SEATED){ //Seats the customer if they need it
+		    seatCustomer(tempCustomer);
+		    return true;
+		}
+		if(tempCustomer.state == CustomerState.READY_TO_ORDER) { //Takes new orders for customers that are ready
+		    //takeOrder(c);
+			takeOrderAndGiveOrderToCook(tempCustomer);
+		    return true;
+		}
+		if (tempTableNum != null) {
+			tellCustomerToChangeOrder(tempCustomer);
+			return true;
+		}
 	}
 	
 	if (!currentPosition.equals(originalPosition)) {
@@ -379,9 +407,11 @@ public class WaiterAgent extends Agent implements Waiter {
 	// Generate a price for the food from the menu
 	Menu m = new Menu();
 	double price = 0.00;
-	for (int i = 0; i < m.choices.length; i++) {
-		if (m.choices[i] == customer.choice) {
-			price = m.prices[i];
+	synchronized(m) {
+		for (int i = 0; i < m.choices.length; i++) {
+			if (m.choices[i] == customer.choice) {
+				price = m.prices[i];
+			}
 		}
 	}
 
@@ -409,11 +439,13 @@ public class WaiterAgent extends Agent implements Waiter {
     	print(cust.cmr + " --  Sorry but the order cannot be placed.  Is there something else that you want?");
     	cust.cmr.msgPleaseReorder(new Menu(cust.choice));
     	// Remove the index from the customerToChangeOrder List
-    	for (int i = 0; i < customerToChangeOrder.size(); i++) {
-    		if (customerToChangeOrder.get(i) == cust.tableNum) { // To prevent concurrent modification exception
-    			customerToChangeOrder.remove(i);
-    			break;
-    		}
+    	synchronized(customerToChangeOrder) {
+	    	for (int i = 0; i < customerToChangeOrder.size(); i++) {
+	    		if (customerToChangeOrder.get(i) == cust.tableNum) { // To prevent concurrent modification exception
+	    			customerToChangeOrder.remove(i);
+	    			break;
+	    		}
+	    	}
     	}
     	cust.state = CustomerState.NO_ACTION;
     	stateChanged();
@@ -525,41 +557,43 @@ public class WaiterAgent extends Agent implements Waiter {
 	Boolean firstStep   = true;
 	Boolean gotPermit   = true;
 
-	for (Position tmpPath: path) {
-	    //The first node in the path is the current node. So skip it.
-	    if (firstStep) {
-		firstStep   = false;
-		continue;
-	    }
-
-	    //Try and get lock for the next step.
-	    int attempts    = 1;
-	    gotPermit       = new Position(tmpPath.getX(), tmpPath.getY()).moveInto(aStar.getGrid());
-
-	    //Did not get lock. Lets make n attempts.
-	    while (!gotPermit && attempts < 3) {
-		//System.out.println("[Gaut] " + guiWaiter.getName() + " got NO permit for " + tmpPath.toString() + " on attempt " + attempts);
-
-		//Wait for 1sec and try again to get lock.
-		try { Thread.sleep(1000); }
-		catch (Exception e){}
-
-		gotPermit   = new Position(tmpPath.getX(), tmpPath.getY()).moveInto(aStar.getGrid());
-		attempts ++;
-	    }
-
-	    //Did not get lock after trying n attempts. So recalculating path.            
-	    if (!gotPermit) {
-		//System.out.println("[Gaut] " + guiWaiter.getName() + " No Luck even after " + attempts + " attempts! Lets recalculate");
-		guiMoveFromCurrentPostionTo(to);
-		break;
-	    }
-
-	    //Got the required lock. Lets move.
-	    //System.out.println("[Gaut] " + guiWaiter.getName() + " got permit for " + tmpPath.toString());
-	    currentPosition.release(aStar.getGrid());
-	    currentPosition = new Position(tmpPath.getX(), tmpPath.getY ());
-	    guiWaiter.move(currentPosition.getX(), currentPosition.getY());
+	synchronized(path) {
+		for (Position tmpPath: path) {
+		    //The first node in the path is the current node. So skip it.
+		    if (firstStep) {
+			firstStep   = false;
+			continue;
+		    }
+	
+		    //Try and get lock for the next step.
+		    int attempts    = 1;
+		    gotPermit       = new Position(tmpPath.getX(), tmpPath.getY()).moveInto(aStar.getGrid());
+	
+		    //Did not get lock. Lets make n attempts.
+		    while (!gotPermit && attempts < 3) {
+			//System.out.println("[Gaut] " + guiWaiter.getName() + " got NO permit for " + tmpPath.toString() + " on attempt " + attempts);
+	
+			//Wait for 1sec and try again to get lock.
+			try { Thread.sleep(1000); }
+			catch (Exception e){}
+	
+			gotPermit   = new Position(tmpPath.getX(), tmpPath.getY()).moveInto(aStar.getGrid());
+			attempts ++;
+		    }
+	
+		    //Did not get lock after trying n attempts. So recalculating path.            
+		    if (!gotPermit) {
+			//System.out.println("[Gaut] " + guiWaiter.getName() + " No Luck even after " + attempts + " attempts! Lets recalculate");
+			guiMoveFromCurrentPostionTo(to);
+			break;
+		    }
+	
+		    //Got the required lock. Lets move.
+		    //System.out.println("[Gaut] " + guiWaiter.getName() + " got permit for " + tmpPath.toString());
+		    currentPosition.release(aStar.getGrid());
+		    currentPosition = new Position(tmpPath.getX(), tmpPath.getY ());
+		    guiWaiter.move(currentPosition.getX(), currentPosition.getY());
+		}
 	}
 	/*
 	boolean pathTaken = false;
