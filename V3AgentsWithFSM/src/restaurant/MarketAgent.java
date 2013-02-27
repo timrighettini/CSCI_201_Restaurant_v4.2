@@ -93,11 +93,17 @@ public class MarketAgent extends Agent implements Market {
 		
 		while (true) {	
 			orderID = Integer.toString(rand.nextInt(1000000));
-			
-			for (Order o: orders) { // Check orders to make sure that a duplicate order number does not exist
-				if (orderID.equals(o.id)) {
-					continue;
+			boolean idExists = false;
+			synchronized(orders) {
+				for (Order o: orders) { // Check orders to make sure that a duplicate order number does not exist
+					if (orderID.equals(o.id)) {
+						idExists = true;
+						break;
+					}
 				}
+			}
+			if (idExists == true) { // Go through the loop again, the id for the order exists
+				continue;
 			}
 			break; // All order IDs == unique
 		}
@@ -125,23 +131,49 @@ public class MarketAgent extends Agent implements Market {
 //	return false;
 	
 	protected boolean pickAndExecuteAnAction() {
-		for (Order o: orders) { // Loop through all of the orders
-			if (o.state == orderState.unprocessed) { // The food order needs to be processed, and a bill sent out
-				processFoodOrder(o);
+		Order tempOrder = null; // This temp variable will be used, as with the other agents, to help create synchronized searching
+		Payment tempPayment = null;
+		synchronized(orders) {
+			for (Order o: orders) { // Loop through all of the orders
+				if (o.state == orderState.unprocessed) { // The food order needs to be processed, and a bill sent out
+					tempOrder = o;
+					break;
+				}
+				
+				if (o.state == orderState.pending) { // Order will be checked to incoming customer payments if it is pending
+					synchronized(cashierPayments) {
+						for (Payment cP: cashierPayments) { // Check to a cashierPayment
+							if (cP.id.equals(o.id) ) {
+								tempOrder = o;
+								tempPayment = cP;
+								break;
+							}
+						}
+					}
+				}
+				
+				if (o.state == orderState.delivered) { // Order needs to be removed from the list once it has been delivered
+					tempOrder = o;
+					break;
+				}
+			}
+		}
+		if (tempOrder != null) {
+			if (tempOrder.state == orderState.unprocessed) { // The food order needs to be processed, and a bill sent out
+				processFoodOrder(tempOrder);
 				return true;
 			}
 			
-			if (o.state == orderState.pending) { // Order will be checked to incoming customer payments if it is pending
-				for (Payment cP: cashierPayments) { // Check to a cashierPayment
-					if (cP.id.equals(o.id) ) {
-						shipFoodOrder(o, cP);
-						return true;
-					}
+			if (tempOrder.state == orderState.pending) { // Order will be checked to incoming customer payments if it is pending
+				if (tempPayment != null) {
+					shipFoodOrder(tempOrder, tempPayment);
+					return true;
 				}
+				
 			}
 			
-			if (o.state == orderState.delivered) { // Order needs to be removed from the list once it has been delivered
-				deliverFoodOrder(o);
+			if (tempOrder.state == orderState.delivered) { // Order needs to be removed from the list once it has been delivered
+				deliverFoodOrder(tempOrder);
 				return true;
 			}
 		}
@@ -165,9 +197,11 @@ public class MarketAgent extends Agent implements Market {
 		double d = doGetTotalCost(o.items);
 		if (d <= 0) {
 			Set<String> setKeys = o.items.keySet(); // The size of setKeys will always be one, but if there ever is more than one item to be ordered, this loop is usable in the future
-			for (String s: setKeys) {
-				print("Order Cannot be Fulfilled -- Order Cancelled: " + o.id + " " +  o.items);
-				cook.msgSorryWeCannotFulfillOrder(s);
+			synchronized(setKeys) {
+				for (String s: setKeys) {
+					print("Order Cannot be Fulfilled -- Order Cancelled: " + o.id + " " +  o.items);
+					cook.msgSorryWeCannotFulfillOrder(s);
+				}
 			}
 			orders.remove(o);
 		}
@@ -225,19 +259,23 @@ public class MarketAgent extends Agent implements Market {
 		
 		// Create the methodology for determining d
 		Set<String> keys = items.keySet(); // Iterate through the map
-		for (String k: keys) {
-			if (items.get(k) > inventory.get(k)) { // If this market has less items in its inventory than the items Map asked for, then return 0.00 for cost
-				d = 0.00;
-				return d;
-			}
-			else  {// Else, actually make the bill's cost 
-				d += foodPrices.get(k) * items.get(k); // Get the price * number of items to be bought
+		synchronized(keys) {
+			for (String k: keys) {
+				if (items.get(k) > inventory.get(k)) { // If this market has less items in its inventory than the items Map asked for, then return 0.00 for cost
+					d = 0.00;
+					return d;
+				}
+				else  {// Else, actually make the bill's cost 
+					d += foodPrices.get(k) * items.get(k); // Get the price * number of items to be bought
+				}
 			}
 		}
 		
 		// If Cost is created successfully, decrement the inventory of the market appropriately
-		for (String k: keys) {
-			inventory.put(k, (inventory.get(k) - items.get(k))); // Subtract out the appropriate values from the inventory 
+		synchronized(keys) {
+			for (String k: keys) {
+				inventory.put(k, (inventory.get(k) - items.get(k))); // Subtract out the appropriate values from the inventory 
+			}
 		}
 		
 		return d;

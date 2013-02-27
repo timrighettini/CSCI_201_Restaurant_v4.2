@@ -169,55 +169,84 @@ public class CookAgent extends Agent implements Cook {
     /** Scheduler.  Determine what action is called for, and do it. */
     protected boolean pickAndExecuteAnAction() {
 	
-//   /*Part 2 Normative*/
-    for (Map<String, Integer> d: deliveries) { // If there is a delivery, get the items from it
-    	addFoodToInventory(d);
-    	return true;
-    }
-    	
-	//If there exists an order o whose status is done, place o.
-	for(CookOrder o:orders){
-	    if(o.status == Status.done && o.waitingForShipment == false){
-		placeOrder(o);
-		return true;
+	    /*Part 2 Normative*/
+	    
+	    // Use temp variable for the synchronized loop
+	    Map<String, Integer> tempDelivery = null;
+	    
+	    synchronized(deliveries) {
+		    for (Map<String, Integer> d: deliveries) { // If there is a delivery, get the items from it
+		    	tempDelivery = d;
+		    	break;
+		    }	    
 	    }
-	}
-	//If there exists an order o whose status is pending, cook o.
-	for(CookOrder o:orders){
-	    if(o.status == Status.pending){
-		cookOrder(o);
-		return true;
+	    if (tempDelivery != null) {
+	    	addFoodToInventory(tempDelivery);
+	    	return true;
 	    }
-	}
-	
-	// If there exists an order in the revolving stand, take it out and place it within the cooks order list
-	if (restaurant.revolvingStand.getSize() > 0) { /* New to v4.2 */
-		getOrderFromRevolvingStand();
-		return true;
-	}
-	
-//	/*Part 2 Normative*/
-	// Get the keys of the inventory and turn it into an array	
-	Set<String> keys = inventory.keySet(); // Iterate through the map
-	for (String k: keys) {
-		if (inventory.get(k).amount <= inventory.get(k).threshold) { // If the amount of something in the inventory is < threshold, order that item type
-			if (itemOrdered.get(k) == false && markets.size() > 0) { // The order cannot already be ordered, and markets must exist for this operation to occur
-				orderFromMarket(k);
-				return true;
-			}			
+	    
+	    // Use temp variable for the synchronized loop
+	    CookOrder tempOrder = null;
+	    	
+		//If there exists an order o whose status is done, place o.
+	    synchronized(orders) {
+			for (CookOrder o:orders){
+			    if(o.status == Status.done && o.waitingForShipment == false){
+			    	tempOrder = o;
+			    	break;
+			    }
+			}
+	    }
+		if (tempOrder != null) {
+			placeOrder(tempOrder);
+			return true;
 		}
-	}
+		
+		
+		//If there exists an order o whose status is pending, cook o.
+		synchronized(orders) {
+			for (CookOrder o:orders){
+			    if(o.status == Status.pending){
+			    	tempOrder = o;
+			    	break;
+			    }
+			}		
+		}
+		if (tempOrder != null) {
+			cookOrder(tempOrder);
+			return true;
+		}
+		
+		// If there exists an order in the revolving stand, take it out and place it within the cooks order list
+		if (restaurant.revolvingStand.getSize() > 0) { /* New to v4.2 */
+			getOrderFromRevolvingStand();
+			return true;
+		}
+		
+	//	/*Part 2 Normative*/
+		// Get the keys of the inventory and turn it into an array	
+		Set<String> keys = inventory.keySet(); // Iterate through the map
+		synchronized(keys) {
+			for (String k: keys) {
+				if (inventory.get(k).amount <= inventory.get(k).threshold) { // If the amount of something in the inventory is < threshold, order that item type
+					if (itemOrdered.get(k) == false && markets.size() > 0) { // The order cannot already be ordered, and markets must exist for this operation to occur
+						orderFromMarket(k);
+						return true;
+					}			
+				}
+			}
+		}
+		
+		// Make sure to wake up the cook so that he/she can constantly check the shared data structure
+		if (super.getPermitNumber() == 0 && totalCallTasks == 0) {
+			timer.schedule(new CallTask(this), 10000);
+			totalCallTasks++;
+		}
 	
-	// Make sure to wake up the cook so that he/she can constantly check the shared data structure
-	if (super.getPermitNumber() == 0 && totalCallTasks == 0) {
-		timer.schedule(new CallTask(this), 10000);
-		totalCallTasks++;
-	}
-
-	//we have tried all our rules (in this case only one) and found
-	//nothing to do. So return false to main loop of abstract agent
-	//and wait.
-	return false;
+		//we have tried all our rules (in this case only one) and found
+		//nothing to do. So return false to main loop of abstract agent
+		//and wait.
+		return false;
     }
     
 
@@ -230,19 +259,21 @@ public class CookAgent extends Agent implements Cook {
     	if (inventory.get(order.choice).amount <= 0 && order.waitingForShipment == false) {
     		boolean removeOrder = true; // flag to remove the order
     		long timeForDelivery = 0;
-    		for (ETA eta: arrivalTimes) {
-    			if (eta.items.get(order.choice) != null) { // If an order for this item actually exists
-    				timeForDelivery = eta.deliveryTime + (eta.orderTime - System.currentTimeMillis());
-    				//print(eta.deliveryTime + " " + eta.orderTime + " " + System.currentTimeMillis()); // Debug for the algorithm
-    				if (timeForDelivery > REASONABLE_WAIT) { 
-    					// If an item of this choice is is NOT coming soon (if time ordered - currentTime > deliveryTime - REASONABLE_WAIT)
-    					removeOrder = true;
-    				}
-    				else { // The order is coming soon, break out of loop and continue with regular ordering stuff
-    					removeOrder = false;
-    					break;
-    				}
-    			}
+    		synchronized(arrivalTimes) { // Since I'm not synchronizing the entire action, the system should not deadlock
+	    		for (ETA eta: arrivalTimes) {
+	    			if (eta.items.get(order.choice) != null) { // If an order for this item actually exists
+	    				timeForDelivery = eta.deliveryTime + (eta.orderTime - System.currentTimeMillis());
+	    				//print(eta.deliveryTime + " " + eta.orderTime + " " + System.currentTimeMillis()); // Debug for the algorithm
+	    				if (timeForDelivery > REASONABLE_WAIT) { 
+	    					// If an item of this choice is is NOT coming soon (if time ordered - currentTime > deliveryTime - REASONABLE_WAIT)
+	    					removeOrder = true;
+	    				}
+	    				else { // The order is coming soon, break out of loop and continue with regular ordering stuff
+	    					removeOrder = false;
+	    					break;
+	    				}
+	    			}
+	    		}
     		}
     		if (removeOrder == true) { // If no delivery is coming soon for the proper ingredients
     			print("Out of item: " + order.choice + ".  Telling " + order.waiter + " to get a different order.");
@@ -283,22 +314,28 @@ public class CookAgent extends Agent implements Cook {
 
     private void addFoodToInventory(Map<String, Integer> items) { // Fetch a delivery & add contents to inventory
     	// Iterate through inventory and add items to cook
-    	for (ETA aT: arrivalTimes) {
-    		if (aT.items == items) {
-    			arrivalTimes.remove(aT);
-    			break;
-    		}
+    	synchronized(arrivalTimes) {
+	    	for (ETA aT: arrivalTimes) {
+	    		if (aT.items == items) {
+	    			arrivalTimes.remove(aT);
+	    			break;
+	    		}
+	    	}
     	}
     	
 		Set<String> setKeys = items.keySet(); // The size of setKeys will always be one, but if there ever is more than one item to be ordered, this loop is usable in the future
-		for (String s: setKeys) {
-			inventory.get(s).amount += items.get(s); // Add the items from the order into the inventory
-			itemOrdered.put(s, false); // Set this ordered value to false so that the item can be ordered again if it runs out
-			// Check through orders arrayList and make all waitForShipment values to false so that the items can actually be cooked
-			for (CookOrder o: orders) {
-				o.waitingForShipment = false;	
-			}
-		}   
+		synchronized(setKeys) {
+			for (String s: setKeys) {
+				inventory.get(s).amount += items.get(s); // Add the items from the order into the inventory
+				itemOrdered.put(s, false); // Set this ordered value to false so that the item can be ordered again if it runs out
+				// Check through orders arrayList and make all waitForShipment values to false so that the items can actually be cooked
+				synchronized(orders) {
+					for (CookOrder o: orders) {
+						o.waitingForShipment = false;	
+					}
+				}
+			}   
+		}
     	
     	deliveries.remove(items);
     }

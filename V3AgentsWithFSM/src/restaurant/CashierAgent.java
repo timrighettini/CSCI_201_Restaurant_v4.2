@@ -67,24 +67,48 @@ public class CashierAgent extends Agent implements Cashier{
 	}
 
 	protected boolean pickAndExecuteAnAction() {
-		for (PayCustomer cp: customerPayments) { /*Part 1 Normative*/
-			for (Bill b: billsToPay) { // If a bill has been given to the cashier from the waiter, check to see if there is a matching customer payment
-				if (b.agent instanceof CustomerAgent) { // Then the agent contained within the bill is a customer -- Check to see if customer name matches a customer in a payment
-					// Cast the agents to the correct type for comparison
-					CustomerAgent bTemp = (CustomerAgent) b.agent;
-					CustomerAgent cTemp = (CustomerAgent) cp.cBill.agent;
-					if (bTemp.getName().equals(cTemp.getName())) { // Then both customers are the same! 
-						// May switch to comparing a different variable between customers later, or make it so that customer names are unique
-						checkCustomerPayment(cp, b);
-						return true;
+		// Use two temporary variables to determine if the loop navigation was successful or not
+		Bill tempBill = null;
+		PayCustomer tempPC = null;
+		// If both of these values are not null, then execute the action AFTER the loop instead of during the loop
+		
+		synchronized (customerPayments) {
+			for (PayCustomer cp: customerPayments) { /*Part 1 Normative*/
+				if (tempBill != null && tempPC != null) {break;} // Variables have been found, break				
+				synchronized(billsToPay) {
+					for (Bill b: billsToPay) { // If a bill has been given to the cashier from the waiter, check to see if there is a matching customer payment
+						if (b.agent instanceof CustomerAgent) { // Then the agent contained within the bill is a customer -- Check to see if customer name matches a customer in a payment
+							// Cast the agents to the correct type for comparison
+							CustomerAgent bTemp = (CustomerAgent) b.agent;
+							CustomerAgent cTemp = (CustomerAgent) cp.cBill.agent;
+							if (bTemp.getName().equals(cTemp.getName())) { // Then both customers are the same! 
+								tempBill = b;
+								tempPC = cp;
+								break;
+							}
+						}
 					}
 				}
 			}
+		}		
+		if (tempBill != null && tempPC != null) {
+			// May switch to comparing a different variable between customers later, or make it so that customer names are unique
+			checkCustomerPayment(tempPC, tempBill);
+			return true;
 		}
 		
-		for (Bill b: marketBills) { /*Part 2 Normative*/ 
+		// Use a temporary variable as seen in the above loop, but now with a new bill variable
+		Bill tempMarketBill = null;
+		
+		synchronized(marketBills) {
+			for (Bill b: marketBills) { /*Part 2 Normative*/ 
+				tempMarketBill = b;
+				break;
+			}
+		}		
+		if (tempMarketBill != null) {
 			// If there is a bill in marketBills, pay it off
-			payMarketBill(b);
+			payMarketBill(tempMarketBill);
 			return true;
 		}
 		
