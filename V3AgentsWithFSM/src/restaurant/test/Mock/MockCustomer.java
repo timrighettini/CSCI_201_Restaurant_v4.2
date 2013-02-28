@@ -6,6 +6,7 @@ import restaurant.CustomerAgent.AgentState;
 import restaurant.interfaces.Cashier;
 import restaurant.interfaces.Customer;
 import restaurant.interfaces.Waiter;
+import restaurant.*;
 
 public class MockCustomer extends MockAgent implements Customer {
 

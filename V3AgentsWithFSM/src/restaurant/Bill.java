@@ -11,6 +11,7 @@ public class Bill {
 	public String choice; // What was ordered
 	public Agent agent; // Determines what type of agent made the order
 	
+	
 	public Bill(double totalCost, String choice, Agent agent) {
 		this.totalCost = totalCost;
 		this.choice = choice;

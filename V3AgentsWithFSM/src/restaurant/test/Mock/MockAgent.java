@@ -3,6 +3,8 @@
  */
 package restaurant.test.Mock;
 
+import agent.Agent;
+
 /**
  * This is the base class for a mock agent. It only defines that an agent should
  * contain a name.
@@ -10,7 +12,7 @@ package restaurant.test.Mock;
  * @author Sean Turner
  * 
  */
-public class MockAgent {
+public class MockAgent extends Agent {
 	private String name;
 	
 	public EventLog log = new EventLog(); // Will use this in my MockAgents 
@@ -25,6 +27,12 @@ public class MockAgent {
 
 	public String toString() {
 		return this.getClass().getName() + ": " + name;
+	}
+
+	@Override
+	protected boolean pickAndExecuteAnAction() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

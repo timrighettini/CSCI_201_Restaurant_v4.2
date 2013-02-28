@@ -77,10 +77,10 @@ public class CashierAgent extends Agent implements Cashier{
 				if (tempBill != null && tempPC != null) {break;} // Variables have been found, break				
 				synchronized(billsToPay) {
 					for (Bill b: billsToPay) { // If a bill has been given to the cashier from the waiter, check to see if there is a matching customer payment
-						if (b.agent instanceof CustomerAgent) { // Then the agent contained within the bill is a customer -- Check to see if customer name matches a customer in a payment
+						if (b.agent instanceof Customer) { // Then the agent contained within the bill is a customer -- Check to see if customer name matches a customer in a payment
 							// Cast the agents to the correct type for comparison
-							CustomerAgent bTemp = (CustomerAgent) b.agent;
-							CustomerAgent cTemp = (CustomerAgent) cp.cBill.agent;
+							Customer bTemp = (Customer) b.agent;
+							Customer cTemp = (Customer) cp.cBill.agent;
 							if (bTemp.getName().equals(cTemp.getName())) { // Then both customers are the same! 
 								tempBill = b;
 								tempPC = cp;
@@ -144,10 +144,10 @@ public class CashierAgent extends Agent implements Cashier{
 
 	/*Part 2 Normative*/
 	private void payMarketBill(Bill bill) { // Pay the bill sent from a market by using the Agent reference in bill
-		if (bill.agent instanceof MarketAgent) { // Just to be sure...but ONLY marketAgent bills should be sent to this list
+		if (bill.agent instanceof Market) { // Just to be sure...but ONLY marketAgent bills should be sent to this list
 			totalMoney -= bill.totalCost;
-			print("Bill paid to market: " + ((MarketAgent) bill.agent).getName() + ".  Cost: " + df.format(bill.totalCost) + ".  Totalmoney = " + df.format(totalMoney));
-			((MarketAgent) bill.agent).msgHereIsCashierPayment(bill.totalCost, bill.choice);
+			print("Bill paid to market: " + ((Market) bill.agent).getName() + ".  Cost: " + df.format(bill.totalCost) + ".  Totalmoney = " + df.format(totalMoney));
+			((Market) bill.agent).msgHereIsCashierPayment(bill.totalCost, bill.choice);
 			marketBills.remove(bill);
 			stateChanged();	
 		}
@@ -160,6 +160,37 @@ public class CashierAgent extends Agent implements Cashier{
 	
 	public String toString() {
 		return "Market " + getName();
+	}
+	
+	// Methods for JUnit testing
+	
+	public List<Bill> getBillsToPay() {
+		return billsToPay;
+	}
+	
+	public List<PayCustomer> getCustomerPayments() {
+		return customerPayments;
+	}
+	
+	public double getTotalMoney() {
+		return totalMoney;
+	}
+	
+	public List<Bill> getMarketBills() {
+		return marketBills;
+	}
+	
+	public void runScheduler() {
+		pickAndExecuteAnAction();
+	}
+	
+	public boolean findCBill(Bill b) {
+		for (PayCustomer p: customerPayments) {
+			if (p.cBill == b) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }
