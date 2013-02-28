@@ -120,10 +120,10 @@ public class CashierAgent extends Agent implements Cashier{
 	private void checkCustomerPayment(PayCustomer cp, Bill bill) { 
 	// Check to see if cp’s bill matches a bill in the billsToPay dataBase, and then parse information 
 		if (cp.payment == cp.cBill.totalCost) {
-			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is correct: " + df.format(cp.payment));
+			print(((Customer) cp.cBill.agent).getName() + "'s payment is correct: " + df.format(cp.payment));
 			totalMoney += cp.payment; // Increment the money earned for the restaurant
 			// send a message to customer saying that correct payment amount was fulfilled
-			((CustomerAgent) cp.cBill.agent).msgThankYouComeAgain(); 
+			((Customer) cp.cBill.agent).msgThankYouComeAgain(); 
 			customerPayments.remove(cp);
 			billsToPay.remove(bill);
 			stateChanged();
@@ -133,8 +133,8 @@ public class CashierAgent extends Agent implements Cashier{
 			totalMoney += cp.payment; // Increment the money earned for the restaurant
 			// send a message to customer saying that payment was received, but that it was 
 			// not enough: The amount left over will have to be repaid ASAP.	
-			print(((CustomerAgent) cp.cBill.agent).getName() + "'s payment is short: " + df.format(cp.payment) +  ".  Please repay ASAP!");
-			((CustomerAgent) cp.cBill.agent).msgNextTimePayTheDifference(cp.cBill.totalCost - cp.payment /* is amountLeftToPay*/); 
+			print(((Customer) cp.cBill.agent).getName() + "'s payment is short: " + df.format(cp.payment) +  ".  Please repay ASAP!");
+			((Customer) cp.cBill.agent).msgNextTimePayTheDifference(cp.cBill.totalCost - cp.payment /* is amountLeftToPay*/); 
 			customerPayments.remove(cp);
 			billsToPay.remove(bill);
 			stateChanged();

@@ -12,6 +12,8 @@ package restaurant.test.Mock;
  */
 public class MockAgent {
 	private String name;
+	
+	public EventLog log = new EventLog(); // Will use this in my MockAgents 
 
 	public MockAgent(String name) {
 		this.name = name;
