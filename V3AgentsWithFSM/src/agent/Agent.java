@@ -40,6 +40,10 @@ public abstract class Agent {
 	protected void print(String msg) {
 		print(msg, null);
 	}
+	
+	public void testprint(String msg) {
+		print(msg, null);
+	}
 
 	/** Print message with exception stack trace */
 	protected void print(String msg, Throwable e) {
