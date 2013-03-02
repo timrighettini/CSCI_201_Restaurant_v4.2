@@ -52,73 +52,77 @@ public class RestaurantPanel extends JPanel {
     private Vector<MarketAgent> markets = new Vector<MarketAgent>();
 
     public RestaurantPanel(RestaurantGui gui){
-	this.gui = gui;
+    	
+    	// Set up the cashier reference for the cook -- v4.1 fix
+    	cook.setCashier(cashier);
+	    	
+		this.gui = gui;
+		
+		//intialize the semaphore grid
+		for (int i=0; i<gridX+1 ; i++)
+		    for (int j = 0; j<gridY+1; j++)
+			grid[i][j]=new Semaphore(1,true);
+		//build the animation areas
+		try {
+		    //make the 0-th row and column unavailable
+		    System.out.println("making row 0 and col 0 unavailable.");
+		    for (int i=0; i<gridY+1; i++) grid[0][0+i].acquire();
+		    for (int i=1; i<gridX+1; i++) grid[0+i][0].acquire();
+		    System.out.println("adding wait area");
+		    restaurant.addWaitArea(2, 2, 13);
+		    for (int i=0; i<13; i++) grid[2][2+i].acquire();
+		    System.out.println("adding counter area");
+		    restaurant.addCounter(17, 2, 13);
+		    for (int i=0; i<13; i++) grid[17][2+i].acquire();
+		    System.out.println("adding grill area");
+		    restaurant.addGrill(19, 3, 10);
+		    for (int i=0; i<10; i++) grid[19][3+i].acquire();
+		    //Let's just put the four static tables in for now
+		    System.out.println("adding table 1");
+		    tables[0] = new Table("T1", 5, 3, 3);//, restaurant);
+			restaurant.addTable("T1", 5, 3, 3);
+		    for (int i=0; i<3; i++)
+			for (int j=0; j<3; j++)
+			    grid[5+i][3+j].acquire();// because grid is 0-based
+		    System.out.println("adding table 2");
+		    tables[1] = new Table("T2", 5, 8, 3);//, restaurant);
+			restaurant.addTable("T2", 5, 8, 3);
+		    for (int i=0; i<3; i++)
+			for (int j=0; j<3; j++)
+			    grid[5+i][8+j].acquire();// because grid is 0-based
+		    System.out.println("adding table 3");
+		    tables[2] = new Table("T3", 10, 3, 3);//,restaurant);
+			restaurant.addTable("T3", 10, 3, 3);
+		    for (int i=0; i<3; i++)
+			for (int j=0; j<3; j++)
+			    grid[10+i][3+j].acquire();// because grid is 0-based
+		    System.out.println("adding table 4");
+		    tables[3] = new Table ("T4", 10, 8, 3);//,restaurant);
+			restaurant.addTable("T4", 10, 8, 3);
+		    for (int i=0; i<3; i++)
+			for (int j=0; j<3; j++)
+			    grid[10+i][8+j].acquire();// because grid is 0-based
+		}catch (Exception e) {
+			System.out.println("Unexpected exception caught in during setup:"+ e);
+		}
+		restaurant.setAnimDelay(500);
+		restaurant.displayRestaurant();
 	
-	//intialize the semaphore grid
-	for (int i=0; i<gridX+1 ; i++)
-	    for (int j = 0; j<gridY+1; j++)
-		grid[i][j]=new Semaphore(1,true);
-	//build the animation areas
-	try {
-	    //make the 0-th row and column unavailable
-	    System.out.println("making row 0 and col 0 unavailable.");
-	    for (int i=0; i<gridY+1; i++) grid[0][0+i].acquire();
-	    for (int i=1; i<gridX+1; i++) grid[0+i][0].acquire();
-	    System.out.println("adding wait area");
-	    restaurant.addWaitArea(2, 2, 13);
-	    for (int i=0; i<13; i++) grid[2][2+i].acquire();
-	    System.out.println("adding counter area");
-	    restaurant.addCounter(17, 2, 13);
-	    for (int i=0; i<13; i++) grid[17][2+i].acquire();
-	    System.out.println("adding grill area");
-	    restaurant.addGrill(19, 3, 10);
-	    for (int i=0; i<10; i++) grid[19][3+i].acquire();
-	    //Let's just put the four static tables in for now
-	    System.out.println("adding table 1");
-	    tables[0] = new Table("T1", 5, 3, 3);//, restaurant);
-		restaurant.addTable("T1", 5, 3, 3);
-	    for (int i=0; i<3; i++)
-		for (int j=0; j<3; j++)
-		    grid[5+i][3+j].acquire();// because grid is 0-based
-	    System.out.println("adding table 2");
-	    tables[1] = new Table("T2", 5, 8, 3);//, restaurant);
-		restaurant.addTable("T2", 5, 8, 3);
-	    for (int i=0; i<3; i++)
-		for (int j=0; j<3; j++)
-		    grid[5+i][8+j].acquire();// because grid is 0-based
-	    System.out.println("adding table 3");
-	    tables[2] = new Table("T3", 10, 3, 3);//,restaurant);
-		restaurant.addTable("T3", 10, 3, 3);
-	    for (int i=0; i<3; i++)
-		for (int j=0; j<3; j++)
-		    grid[10+i][3+j].acquire();// because grid is 0-based
-	    System.out.println("adding table 4");
-	    tables[3] = new Table ("T4", 10, 8, 3);//,restaurant);
-		restaurant.addTable("T4", 10, 8, 3);
-	    for (int i=0; i<3; i++)
-		for (int j=0; j<3; j++)
-		    grid[10+i][8+j].acquire();// because grid is 0-based
-	}catch (Exception e) {
-	    System.out.println("Unexpected exception caught in during setup:"+ e);
-	}
-	restaurant.setAnimDelay(500);
-	restaurant.displayRestaurant();
-
-	host.startThread();
-	cook.startThread();
-	cashier.startThread(); // Start the thread of the cashier
-
-	setLayout(new GridLayout(1,2, 20,20));
-	group.setLayout(new GridLayout(1,2, 10,10));
+		host.startThread();
+		cook.startThread();
+		cashier.startThread(); // Start the thread of the cashier
 	
-	group.add(waiterPanel);
-	group.add(customerPanel);
-	group.add(marketPanel);
-	group.add(sharedWaiterPanel);
-	
-	initRestLabel();
-	add(restLabel);
-	add(group);
+		setLayout(new GridLayout(1,2, 20,20));
+		group.setLayout(new GridLayout(1,2, 10,10));
+		
+		group.add(waiterPanel);
+		group.add(customerPanel);
+		group.add(marketPanel);
+		group.add(sharedWaiterPanel);
+		
+		initRestLabel();
+		add(restLabel);
+		add(group);
     }
 
     /** Sets up the restaurant label that includes the menu, 
@@ -212,8 +216,6 @@ public class RestaurantPanel extends JPanel {
 		
 		else if(type.equals("Markets")){ // New Market instantiation code
 		    MarketAgent m = new MarketAgent(name);
-		    m.setCook(cook);
-		    m.setCashier(cashier);
 		    cook.addMarket(m);	  
 		    markets.add(m);
 		    m.startThread();

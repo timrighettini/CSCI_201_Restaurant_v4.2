@@ -34,7 +34,18 @@ public class CookAgent extends Agent implements Cook {
     
     // New Map to determine what has been ordered
     Map<String, Boolean> itemOrdered = new HashMap<String, Boolean>();
-
+    
+    // Make a global cashier reference, since there is only ONE CASHIER for any given restaurant
+    /*
+   	To quote the professor:
+    	Your market should not have a global for a SINGLE cook and a
+		SINGLE cashier. A market can have many client Restaurants. What market
+		only deals with one restaurant? Our restaurant only has one cook and
+		one cashier, but there might be many restaurants in a system.
+		
+	He sent this to me in an e-mail, meaning that HERE I can have a global cashier reference, but not for the marketAgent
+	*/
+    List<Cashier> cashiers = Collections.synchronizedList(new ArrayList<Cashier>()); // Will be given to the cook by the restaurant simulation
 
     /** Constructor for CookAgent class
      * @param name name of the cook
@@ -306,7 +317,7 @@ public class CookAgent extends Agent implements Cook {
     	Map<String, Integer> items = new HashMap<String, Integer>();
     	int numOfItemsToOrder = inventory.get(item).MAX - inventory.get(item).amount;
     	items.put(item, numOfItemsToOrder); // Max out the order - amount
-    	markets.get(nextMarket).msgNeedFoodDelivered(items);
+    	markets.get(nextMarket).msgNeedFoodDelivered(items, this, cashiers.get(0));
     	
     	itemOrdered.put(item, true);
     	//System.out.println("Item: " + item + " : " + itemOrdered.get(item) );
@@ -431,6 +442,10 @@ public class CookAgent extends Agent implements Cook {
 	public void setInventoryItemNumber(String choice, int num) { // Set the amount that an item will have
 		inventory.get(choice).amount = num;
 		stateChanged(); // This is necessary so that the cook can check the state of the inventory and order items if necessary after that occurs
+	}
+	
+	public void setCashier(Cashier c) {
+		cashiers.add(c); // There will only be one cashier for this restaurant, but it can be improved to add more cashiers later on...
 	}
 	
 }

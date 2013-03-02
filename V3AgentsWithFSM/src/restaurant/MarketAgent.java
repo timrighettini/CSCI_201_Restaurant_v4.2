@@ -22,10 +22,14 @@ public class MarketAgent extends Agent implements Market {
 		public String id; // order id
 		public Map<String, Integer> items; // Items ordered
 		public orderState state = orderState.unprocessed; // Set the state to unprocessed upon creation (because that is the state is needs to be in)
+		public Cook cook; // This will be a reference to the cook, to avoid global variable gclobbering and the like
+		public Cashier cookCashier; // This will be a reference to the cashier realted to the cook
 		
-		public Order (String id, Map<String, Integer> items) {
+		public Order (String id, Map<String, Integer> items, Cook c, Cashier ca) {
 			this.id = id;
 			this.items = items;
+			this.cook = c;
+			this.cookCashier = ca;
 		}		
 	}
 
@@ -40,9 +44,6 @@ public class MarketAgent extends Agent implements Market {
 	}
 
 	// Agent References
-	private CookAgent cook; 
-	private CashierAgent cashier;
-
 	private List<Order> orders = Collections.synchronizedList(new ArrayList<Order>()); // List of all the cook’s orders
 	private List<Payment> cashierPayments = Collections.synchronizedList(new ArrayList<Payment>()); // Payments from the cashier.  bill.choice will the id of an order instead of the item choice itself
 
@@ -86,7 +87,7 @@ public class MarketAgent extends Agent implements Market {
 
 	// Messages:
 	/*Part 2 Normative*/
-	public void msgNeedFoodDelivered(Map<String, Integer> choices) { // Add cook order to list
+	public void msgNeedFoodDelivered(Map<String, Integer> choices, Cook c, Cashier ca) { // Add cook order to list
 		// Make the order ID, and MAKE SURE that there are no duplicates!
 		
 		String orderID; // ID for the order
@@ -108,7 +109,7 @@ public class MarketAgent extends Agent implements Market {
 			break; // All order IDs == unique
 		}
 		
-		orders.add(new Order(orderID, choices));
+		orders.add(new Order(orderID, choices, c, ca));
 		stateChanged();
 	}
 
@@ -200,15 +201,15 @@ public class MarketAgent extends Agent implements Market {
 			synchronized(setKeys) {
 				for (String s: setKeys) {
 					print("Order Cannot be Fulfilled -- Order Cancelled: " + o.id + " " +  o.items);
-					cook.msgSorryWeCannotFulfillOrder(s);
+					o.cook.msgSorryWeCannotFulfillOrder(s);
 				}
 			}
 			orders.remove(o);
 		}
 		else {
-			cashier.msgHereIsBill(new Bill(d, o.id, this));
+			o.cookCashier.msgHereIsBill(new Bill(d, o.id, this));
 			o.state = orderState.pending;
-			print("Order Successfully Fulfilled: " + o.id + " " +  o.items + ".  Bill sent to " + cashier.getName());
+			print("Order Successfully Fulfilled: " + o.id + " " +  o.items + ".  Bill sent to " + o.cookCashier.getName());
 		}
 	}
 
@@ -244,12 +245,12 @@ public class MarketAgent extends Agent implements Market {
 	}, randomTime); // Will make the time anywhere from 4000 to 40000 ms wait
 		o.state = orderState.shipped;
 		print("Shipped food order: " + o.id + " " +  o.items + ".  Estimated time for delivery (in milliseconds): " + randomTime);
-		cook.msgHereIsYourTrackingInformation(System.currentTimeMillis(), randomTime, o.items);
+		o.cook.msgHereIsYourTrackingInformation(System.currentTimeMillis(), randomTime, o.items);
 	}
 
 	private void deliverFoodOrder(Order o) {  // Deliver the order to the cook
 		print("Order Delivered: " + o.id + " " +  o.items);
-		cook.msgHereIsFoodDelivery(o.items);
+		o.cook.msgHereIsFoodDelivery(o.items);
 		orders.remove(o);
 	}
 
@@ -290,13 +291,9 @@ public class MarketAgent extends Agent implements Market {
 	}
 	
 	// Create setCook and setCashier methods
-	public void setCook(Cook cook) {
-		this.cook = (CookAgent) cook;
-	}
-	
-	public void setCashier(Cashier cashier) {
-		this.cashier = (CashierAgent) cashier;
-	}	
+//	public void setCook(Cook cook) {
+//		this.cook = (CookAgent) cook;
+//	}
 	
 	public void setInventory(String c, int num) {
 		inventory.put(c, num); // This will override the previous entry and add in the new one

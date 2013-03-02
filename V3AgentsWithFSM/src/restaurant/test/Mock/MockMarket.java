@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import restaurant.interfaces.Cashier;
+import restaurant.interfaces.Cook;
 import restaurant.interfaces.Market;
 
 public class MockMarket extends MockAgent implements Market {
@@ -48,9 +50,9 @@ public class MockMarket extends MockAgent implements Market {
 	}
 	
 	/*Not required*/
-	
 	@Override
-	public void msgNeedFoodDelivered(Map<String, Integer> choices) {
+	public void msgNeedFoodDelivered(Map<String, Integer> choices, Cook c,
+			Cashier ca) {
 		// TODO Auto-generated method stub
 		
 	}

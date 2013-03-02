@@ -1168,7 +1168,7 @@ public class CashierUnitTests extends TestCase {
 		// Run the cashier scheduler
 		cashier.runScheduler();
 		
-		cashier.testprint(Double.toString(cashier.getTotalMoney()) + " : " +  Double.toString(cashierPreMoney_1 - testBillMarket_1.totalCost));
+		//cashier.testprint(Double.toString(cashier.getTotalMoney()) + " : " +  Double.toString(cashierPreMoney_1 - testBillMarket_1.totalCost));
 		
 		// Check postconditions
 		assertEquals(cashier.getTotalMoney(), cashierPreMoney_1 - testBillMarket_1.totalCost); // Make sure that the amount from the bill was deducted from the cashier
@@ -1232,7 +1232,7 @@ public class CashierUnitTests extends TestCase {
 		// Even though scheduler would NOT do anything with processing the customer payments, it still would pay the MarketBill anyway
 		cashier.runScheduler();
 		
-		cashier.testprint(Double.toString(cashier.getTotalMoney()) + " : " +  Double.toString(cashierPreMoney_2 - testBillMarket_2.totalCost));
+		//cashier.testprint(Double.toString(cashier.getTotalMoney()) + " : " +  Double.toString(cashierPreMoney_2 - testBillMarket_2.totalCost));
 		
 		// Check postconditions
 		assertEquals(cashier.getTotalMoney(), cashierPreMoney_2 - testBillMarket_2.totalCost); // Make sure that the amount from the bill was deducted from the cashier
