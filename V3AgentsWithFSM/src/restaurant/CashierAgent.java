@@ -22,7 +22,7 @@ public class CashierAgent extends Agent implements Cashier{
 		}
 	}
 
-	private List <Bill> billsToPay = Collections.synchronizedList(new ArrayList<Bill>()); // List of bills received from waiters
+	private List<Bill> billsToPay = Collections.synchronizedList(new ArrayList<Bill>()); // List of bills received from waiters
 	private List<PayCustomer> customerPayments = Collections.synchronizedList(new ArrayList<PayCustomer>()); // List of customer submitted payments
 	private Map <String, Double> foodPrices = new HashMap<String, Double>(); // This will be used to help create bills in billsToPay, since the waiter will not pass an actual bill as an argument to the cashier in “msgHereIsCustomerOrder()”
 	private volatile double totalMoney = 0.00; // The total cash that the restaurant currently has in stock.  It will be added to when bills are processed and subtracted from when paying to buy food orders.
@@ -185,9 +185,11 @@ public class CashierAgent extends Agent implements Cashier{
 	}
 	
 	public boolean findCBill(Bill b) {
-		for (PayCustomer p: customerPayments) {
-			if (p.cBill == b) {
-				return true;
+		synchronized(customerPayments) {
+			for (PayCustomer p: customerPayments) {
+				if (p.cBill == b) {
+					return true;
+				}
 			}
 		}
 		return false;

@@ -167,7 +167,7 @@ public class HostAgent extends Agent implements Host {
 	    //Then runs through the tables and finds the first unoccupied 
 	    //table and tells the waiter to sit the first customer at that table
 	    synchronized(tables) {
-		    for(int i=0; i < nTables; i++){
+		    for (int i=0; i < nTables; i++){
 	
 				if(!tables[i].occupied && waitList.get(0).getRestaurantFull() == false) { // Will prevent a customer from being selected that is in the middle of deciding to stay or not
 				    synchronized(waitList){
@@ -318,7 +318,7 @@ public class HostAgent extends Agent implements Host {
 	nTables++;
 	Table[] tempTables = new Table[nTables];
 	synchronized(tables) {
-		for(int i=0; i < nTables - 1; i++){
+		for (int i=0; i < nTables - 1; i++){
 		    tempTables[i] = tables[i];
 		}  		  			
 	}

@@ -9,7 +9,7 @@ public class BasicWaiterAgent extends WaiterAgent {
 	public BasicWaiterAgent(String name, AStarTraversal aStar,
 			Restaurant restaurant, Table[] tables) {
 		super(name, aStar, restaurant, tables);
-		// TODO Auto-generated constructor stub
+		// Same as a regular waiter agent, nothing more required here
 	}
 
 }

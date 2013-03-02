@@ -120,7 +120,7 @@ public class WaiterAgent extends Agent implements Waiter {
     public void msgImReadyToOrder(Customer customer){
     	//print("received msgImReadyToOrder from:"+customer);
 		synchronized(customers) {
-			for(int i=0; i < customers.size(); i++){
+			for (int i=0; i < customers.size(); i++){
 			    //if(customers.get(i).cmr.equals(customer)){
 			    if (customers.get(i).cmr == customer){
 				customers.get(i).state = CustomerState.READY_TO_ORDER;
@@ -137,7 +137,7 @@ public class WaiterAgent extends Agent implements Waiter {
      * @param choice the food item that the customer chose */
     public void msgHereIsMyChoice(Customer customer, String choice){
 		synchronized(customers) {
-	    	for(MyCustomer c:customers){
+	    	for (MyCustomer c:customers){
 				    if(c.cmr.equals(customer)){
 					c.choice = choice;
 					//c.state = CustomerState.ORDER_PENDING;
@@ -154,7 +154,7 @@ public class WaiterAgent extends Agent implements Waiter {
      * @param f is the guiFood object */
     public void msgOrderIsReady(int tableNum, Food f){
 		synchronized(customers) {
-	    	for(MyCustomer c:customers){
+	    	for (MyCustomer c:customers){
 			    if(c.tableNum == tableNum){
 					c.state = CustomerState.ORDER_READY;
 					c.food = f; //so that later we can remove it from the table.
@@ -169,7 +169,7 @@ public class WaiterAgent extends Agent implements Waiter {
      * @param customer customer who is leaving the restaurant. */
     public void msgDoneEatingAndLeaving(Customer customer){
 		synchronized(customers) {
-	    	for(MyCustomer c:customers){
+	    	for (MyCustomer c:customers){
 			    if(c.cmr.equals(customer)){
 					c.state = CustomerState.IS_DONE;
 					stateChanged();
@@ -272,7 +272,7 @@ public class WaiterAgent extends Agent implements Waiter {
 	if(!customers.isEmpty()){
 	    //System.out.println("in scheduler, customers not empty:");
 	   
-	    for(MyCustomer c:customers){
+	    for (MyCustomer c:customers){
 			if(c.state == CustomerState.ORDER_READY) { //Gives food to customer if the order is ready
 				tempCustomer = c;
 				break;
@@ -298,9 +298,9 @@ public class WaiterAgent extends Agent implements Waiter {
 
 	    // Queue up a customer who is going to change an order
 	    synchronized(customerToChangeOrder) {
-		    for(Integer tNum: customerToChangeOrder) {
+		    for (Integer tNum: customerToChangeOrder) {
 		    	synchronized(customers) {
-				    for(MyCustomer c: customers){
+				    for (MyCustomer c: customers){
 						if(c.tableNum == tNum) { // A customer has requested a change of order, tell this customer to change the order
 							tempCustomer = c;
 							tempTableNum = c.tableNum;

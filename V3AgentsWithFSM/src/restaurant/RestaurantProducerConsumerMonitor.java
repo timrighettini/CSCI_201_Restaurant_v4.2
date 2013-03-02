@@ -12,7 +12,7 @@ public class RestaurantProducerConsumerMonitor {
 		while (orders.size() == MAX) {
 			System.out.println("Revolving Stand: Full, waiting to add...");
 			try {
-				wait(1000); // Wait for 500 milliseconds and then try again
+				wait(500); // Wait for 500 milliseconds and then try again
 			}
 			catch (InterruptedException e) {}
 		}
@@ -30,7 +30,7 @@ public class RestaurantProducerConsumerMonitor {
 		while (orders.size() == 0) {
 			System.out.println("Revolving Stand: Empty, waiting to remove...");
 			try {
-				wait(1000); // Wait for 500 milliseconds and then try again
+				wait(500); // Wait for 500 milliseconds and then try again
 			}
 			catch (InterruptedException e) {}
 		}

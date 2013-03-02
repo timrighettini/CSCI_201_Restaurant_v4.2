@@ -22,8 +22,8 @@ public class MarketAgent extends Agent implements Market {
 		public String id; // order id
 		public Map<String, Integer> items; // Items ordered
 		public orderState state = orderState.unprocessed; // Set the state to unprocessed upon creation (because that is the state is needs to be in)
-		public Cook cook; // This will be a reference to the cook, to avoid global variable gclobbering and the like
-		public Cashier cookCashier; // This will be a reference to the cashier realted to the cook
+		public Cook cook; // This will be a reference to the cook, to avoid global variable clobbering and the like
+		public Cashier cookCashier; // This will be a reference to the cashier related to the cook
 		
 		public Order (String id, Map<String, Integer> items, Cook c, Cashier ca) {
 			this.id = id;
