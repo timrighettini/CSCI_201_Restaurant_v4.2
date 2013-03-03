@@ -29,9 +29,9 @@ This should be really simple to check.  All you need to do is search through my 
 
 Scenario #2:  Implement Multi-step Actions
 How to Run/Grade:
-In the WaiterAgent, the method takeOrderAndGiveOrderToCook(...), and in the CustomerAgent, the method callWaiterAndOrderFood(), implement the multistep actions, along with the accompanying multiAction semaphore and messages.  These are the places to look to grade this functionality
+In the WaiterAgent, the method takeOrderAndGiveOrderToCook(...), and in the CustomerAgent, the method callWaiterAndOrderFood(), implement the multistep actions, along with the accompanying multiAction semaphore and other messages.  These are the places to look to grade this functionality.
 
-Scenario #3:  Incorporate Shared Data Between Cook and Waiters
+Scenario #3:  Incorporate Shared Data Between Cook and Waiter
 On the GUI, you will see that there is a new list for adding “SDWaiters.”  When you click on the add button, you will add shared data waiters into the simulation, denoted by s1, s2,..., sN.  These waiters will complete the shared data operation between the cook and themselves by using the revolving stand when active with the customer.
 
 The revolving stand instance, or the Restaurant Producer-Consumer Monitor, is located in Restaurant within the layoutGUI directory – I did this because the cook and waiters already had a reference to this restaurant file.  The actual code for this shared data structure is located where the other main agents are located.
@@ -40,9 +40,9 @@ How to Run/Grade:
 1.  Click the “Add” button for SDWaiters, and add in as many shared data waiters as you want.
 2.  Assign them to a customer, and everything will take off from there.
 
-Scenario #4:
+Scenario #4:  Unit Test Your Cashier
 How to Run/Grade:
-This is really easy, if you are using Eclipse.  If that is the case, just run the test class.  Every Test Method name explains what the test is, and comments further elaborate upon it within each method.  It is located in the test directory.
+This is really easy, if you are using Eclipse.  If that is the case, just run the test class and you will see the results of every test method within the JUnit dialog box.  Every Test Method name explains what the test is, and comments further elaborate upon it within each method.  It is located in the test directory.
 
 For v4.1:
 
@@ -135,7 +135,7 @@ This is similar to how Non-Normative Scenario #4 works.
 Non-Normative Scenario #6: Waiter wants to go on break, he's told it's NOT OK and must keep working.
 How to run:
 1.  Click the “On Break?” button for a waiter while the waitList, or the number of customers waiting to be served in line, is > 0.  
-* The host will NOT allow the waiter to break if there are still people to be served.  Look in the console for the messaging to see the results of this scenario, because the GUI button will not change states as a result of this.
+* The host will NOT allow the waiter to break if there are still people to be served, or if the other waiters are on all on break.  Look in the console for the messaging to see the results of this scenario, because the GUI button will not change states as a result of this.
 
 Non-Normative Scenario #7: Customer comes to restaurant and restaurant is full, customer is told and waits.
 If you didn’t notice already, there is also a “Will Wait” checkbox in the GUI customer panel.  If this checkbox is checked, then this case will be enacted.  Else, the Non-Normative Scenario #8 will be enacted.  
@@ -149,4 +149,3 @@ How to run:
 1.  Make sure that a combination of four customers are seated or waiting to be seated.
 2.  Once the condition is achieved, UN-check the “Wail Wait” checkbox, and then add a fifth customer to the line by setting the fifth customer to hungry.
 3.  Assuming the “Will Wait” checkbox is un-checked, the rest of the scenario takes off from here, and the result is that the customer leaves the restaurant.
-

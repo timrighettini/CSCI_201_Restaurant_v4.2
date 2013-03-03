@@ -27,7 +27,7 @@ public class WaiterAgent extends Agent implements Waiter {
     //State constants for Customers
 
     public enum CustomerState 
-	{NEED_SEATED,READY_TO_ORDER,ORDER_PENDING,ORDER_READY,IS_DONE,NO_ACTION};
+	{NEED_SEATED,READY_TO_ORDER,ORDER_PENDING,ORDER_READY,IS_DONE,NO_ACTION,MULTI_ACTION/*New to v4.2*/};
 
     Timer timer = new Timer();
 
@@ -48,6 +48,7 @@ public class WaiterAgent extends Agent implements Waiter {
 		    this.cmr = (CustomerAgent) cmr;
 		    tableNum = num;
 		    state = CustomerState.NO_ACTION;
+		    choice = "none";
 		}
     }
 
@@ -171,8 +172,14 @@ public class WaiterAgent extends Agent implements Waiter {
 		synchronized(customers) {
 	    	for (MyCustomer c:customers){
 			    if(c.cmr.equals(customer)){
+					// Put in a check so that the waiter does not hang for a customer is he/she decided to leave and NOT order anything
+					if (c.state == CustomerState.MULTI_ACTION) { // If Waiter sees that customer was still in multiAction state, then release the semaphore as if a customer has ordered 
+						// The customer jumps past that message, otherwise, and then the waiter agent would get locked 
+						multiAction.release();					
+					}			    	
+					//print("MULTI_ACTION permits " + multiAction.availablePermits());
 					c.state = CustomerState.IS_DONE;
-					stateChanged();
+					stateChanged();	
 					return;
 			    }
 			}
@@ -370,7 +377,7 @@ public class WaiterAgent extends Agent implements Waiter {
      * @param customer customer that is ready to order */
     private void takeOrder(MyCustomer customer) {
 	DoTakeOrder(customer); //animation
-	customer.state = CustomerState.NO_ACTION;
+	customer.state = CustomerState.MULTI_ACTION; // This is set to tell the waiter that the customer is in multiAction mode
 	customer.cmr.msgWhatWouldYouLike();
 	// stateChanged(); // This is not needed, otherwise, two permits would be released from the semaphore 
     }
@@ -490,7 +497,12 @@ public class WaiterAgent extends Agent implements Waiter {
     		print("Unexpected exception caught in Agent thread:", e);
     	}
     	
-    	giveOrderToCook(customer);    	
+    	if (!customer.choice.equals("none")) { // If the customer has ordered something
+    		giveOrderToCook(customer);    	
+    	}
+    	else { // The customer HAS NOT ordered anything
+    		print(customer.cmr.getName() + " did not buy anything.  Order was not sent to " + cook.getName());
+    	}
     }
     
 
