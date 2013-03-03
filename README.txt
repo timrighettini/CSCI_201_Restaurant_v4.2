@@ -1,11 +1,11 @@
-README.txt – Restaurant Project v4.1
+README.txt – Restaurant Project v4.2
 Name: Tim Righettini
 
 ----------------
 Hello Mr. Grader
 ----------------
 
-This is the readme doc about the first iteration (v4.1) of the restaurant project.  Mainly, this document will tell you how to run all the test cases described in the Requirements section for v4.1.
+This is the readme doc about the first iteration (v4.1) of the restaurant project.  Mainly, this document will tell you how to run all the test cases described in the Requirements section for v4.2.
 The format will be like this:
 
 1.  The name of the case, EXACTLY as stated on the website, will appear first.
@@ -15,7 +15,36 @@ The format will be like this:
 
 *Note 2: Make sure to type in integers for food numbers and doubles for money values.  If you don’t the values will not be accepted by the GUI (the program won’t crash, but the action will not perform on the text box until you enter in the correctly formatted value).
 
+*Note 3: For Reference, I kept in the v4.1 test cases, just in case you need them.
+
 Now, on to describing how to test each one of these cases:
+
+For v4.2:
+
+Scenario #1: Make sure your agents are thread-safe. 
+How to Run/Grade:
+This should be really simple to check.  All you need to do is search through my code and find my Synchronized Lists and Loops.  To make this task easier in Eclipse, do the following for the six main agents:
+1.  Use the find command and search for the word “List” (NOT as a whole word), and you will find all of my synchronized lists.
+2.  Use the find command and search for the word “for (” (EXACTLY like that), and you will find all of my synchronized loop searches.
+
+Scenario #2:  Implement Multi-step Actions
+How to Run/Grade:
+In the WaiterAgent, the method takeOrderAndGiveOrderToCook(...), and in the CustomerAgent, the method callWaiterAndOrderFood(), implement the multistep actions, along with the accompanying multiAction semaphore and messages.  These are the places to look to grade this functionality
+
+Scenario #3:  Incorporate Shared Data Between Cook and Waiters
+On the GUI, you will see that there is a new list for adding “SDWaiters.”  When you click on the add button, you will add shared data waiters into the simulation, denoted by s1, s2,..., sN.  These waiters will complete the shared data operation between the cook and themselves by using the revolving stand when active with the customer.
+
+The revolving stand instance, or the Restaurant Producer-Consumer Monitor, is located in Restaurant within the layoutGUI directory – I did this because the cook and waiters already had a reference to this restaurant file.  The actual code for this shared data structure is located where the other main agents are located.
+
+How to Run/Grade:
+1.  Click the “Add” button for SDWaiters, and add in as many shared data waiters as you want.
+2.  Assign them to a customer, and everything will take off from there.
+
+Scenario #4:
+How to Run/Grade:
+This is really easy, if you are using Eclipse.  If that is the case, just run the test class.  Every Test Method name explains what the test is, and comments further elaborate upon it within each method.  It is located in the test directory.
+
+For v4.1:
 
 Normative Scenario #1: 1 of every type of agent, no market interactions, customer orders, pays, and leaves
 How to run:
