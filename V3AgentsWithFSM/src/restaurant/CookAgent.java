@@ -354,8 +354,12 @@ public class CookAgent extends Agent implements Cook {
     /* New in v4.2 */
     private void getOrderFromRevolvingStand() {
     	CookOrder o = restaurant.revolvingStand.remove();
-    	orders.add(o);
-    	print("Order removed from the revolving stand: " + o.toString());
+    	if (o != null) { 
+    		// If the cook actually removed an order instead of nothing 
+    		// this is just to be sure, even though the scheduler prevents this from occurring anyway
+	    	orders.add(o);
+	    	print("Order removed from the revolving stand: " + o.toString());
+    	}
     }
 
     // *** EXTRA -- all the simulation routines***
